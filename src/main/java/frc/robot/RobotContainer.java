@@ -90,6 +90,12 @@ public class RobotContainer {
 
     }
 
+    public double getCurrentDraw(){
+        double sum = 0;
+        sum += drivetrain.getCurrentDraw();
+        return sum;
+    }
+
     public void log(){
         drivetrain.log();
         if(DriverStation.isFMSAttached()) NetworkTableInstance.getDefault().flush();
