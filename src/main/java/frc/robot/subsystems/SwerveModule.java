@@ -242,14 +242,14 @@ public class SwerveModule {
         double driveMotorPositionDeltaNative = driveMotorVelocityNative*10*0.02;
         driveMotorSim.setIntegratedSensorVelocity((int)driveMotorVelocityNative);
         driveMotorSim.addIntegratedSensorPosition((int)(driveMotorPositionDeltaNative));
-        driveMotorSim.setSupplyCurrent(driveWheelSim.getCurrentDrawAmps());
+        driveMotorSim.setSupplyCurrent(driveWheelSim.getCurrentDrawAmps()/2);
 
         //SmartDashboard.putNumber("Steer Sim Model Velocity", steeringSim.getAngularVelocityRPM());
         double steerMotorVelocityNative = TalonUtil.rotationsToVelocity(steeringSim.getAngularVelocityRPM()/60, kSteerGearRatio);
         double steerMotorPositionDeltaNative = steerMotorVelocityNative*10*0.02;
         steerMotorSim.setIntegratedSensorVelocity((int)steerMotorVelocityNative);
         steerMotorSim.addIntegratedSensorPosition((int)(steerMotorPositionDeltaNative));
-        steerMotorSim.setSupplyCurrent(steeringSim.getCurrentDrawAmps());
+        steerMotorSim.setSupplyCurrent(steeringSim.getCurrentDrawAmps()/2);
         
         steerEncoderSim.setVelocity((int)(TalonUtil.rotationsToVelocity(steeringSim.getAngularVelocityRPM()/60, 1)*2));
         steerEncoderSim.setRawPosition((int)(getIntegratedHeading().getDegrees()/360.0*4096));
