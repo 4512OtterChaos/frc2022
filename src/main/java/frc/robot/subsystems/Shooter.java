@@ -107,29 +107,6 @@ public class Shooter extends SubsystemBase {
         SmartDashboard.putNumber("Shooter/HoodMM", state.hoodMM);
     }
     
-    private final TalonFXSimCollection flywheelMotorSim = new TalonFXSimCollection(rightMotor);
-    private final FlywheelSim flywheelSim = new FlywheelSim(
-        LinearSystemId.identifyVelocitySystem(kFF.kv, kFF.ka),
-        DCMotor.getFalcon500(1),
-        1,
-        VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(5))
-    );
-
-    @Override
-    public void simulationPeriodic(){
-        flywheelSim.setInputVoltage(rightMotor.getMotorOutputVoltage());
-        flywheelSim.update(0.02);
-
-        double flywheelMotorVelocityNative = TalonUtil.radiansToVelocity(
-            flywheelSim.getAngularVelocityRadPerSec(),
-            1
-        );
-        flywheelMotorSim.setIntegratedSensorVelocity((int)flywheelMotorVelocityNative);
-        flywheelMotorSim.setSupplyCurrent(flywheelSim.getCurrentDrawAmps());
-
-        flywheelMotorSim.setBusVoltage(RobotController.getBatteryVoltage());
-    }
-
     /**
      * Represents a state of flywheel rpm and hood angle achievable by the shooter.
      * Shooter states can be transitioned from by using {@link #interpolate(State, double)}.
@@ -162,5 +139,39 @@ public class Shooter extends SubsystemBase {
                 return new State(newRPM, newHoodMM);
             }
         }
+    }
+
+
+
+    // Simulation
+    private final TalonFXSimCollection rightMotorSim = new TalonFXSimCollection(rightMotor);
+    private final TalonFXSimCollection leftMotorSim = new TalonFXSimCollection(leftMotor);
+    private final FlywheelSim flywheelSim = new FlywheelSim(
+        LinearSystemId.identifyVelocitySystem(kFF.kv, kFF.ka),
+        DCMotor.getFalcon500(2),
+        1,
+        VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(5))
+    );
+
+    @Override
+    public void simulationPeriodic(){
+        flywheelSim.setInputVoltage(rightMotor.getMotorOutputVoltage());
+        flywheelSim.update(0.02);
+
+        double flywheelMotorVelocityNative = TalonUtil.radiansToVelocity(
+            flywheelSim.getAngularVelocityRadPerSec(),
+            1
+        );
+        rightMotorSim.setIntegratedSensorVelocity((int)flywheelMotorVelocityNative);
+        rightMotorSim.setSupplyCurrent(flywheelSim.getCurrentDrawAmps()/4);
+        leftMotorSim.setIntegratedSensorVelocity((int)flywheelMotorVelocityNative);
+        leftMotorSim.setSupplyCurrent(flywheelSim.getCurrentDrawAmps()/4);
+
+        rightMotorSim.setBusVoltage(RobotController.getBatteryVoltage());
+        leftMotorSim.setBusVoltage(RobotController.getBatteryVoltage());
+    }
+
+    public double getCurrentDraw(){
+        return leftMotor.getSupplyCurrent() + rightMotor.getSupplyCurrent();
     }
 }

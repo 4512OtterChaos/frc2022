@@ -131,6 +131,7 @@ public class RobotContainer {
     public double getCurrentDraw(){
         double sum = 0;
         sum += drivetrain.getCurrentDraw();
+        sum += shooter.getCurrentDraw();
         return sum;
     }
 
