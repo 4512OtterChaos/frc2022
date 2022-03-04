@@ -93,4 +93,8 @@ public class Climber extends SubsystemBase {
     @Override
     public void simulationPeriodic() {
     }
+
+    public double getCurrentDraw(){
+        return leftMotor.getOutputCurrent() + rightMotor.getOutputCurrent();
+    }
 }

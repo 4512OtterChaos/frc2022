@@ -23,9 +23,9 @@ public class IntakeConstants {
     );
     
     // Current limits
-    public static final int kIntakeContinuousCurrentLimit = 30;
-    public static final int kIntakePeakCurrentLimit = 40;
-    public static final double kIntakePeakCurrentDuration = 0.1;
+    public static final int kContinuousCurrentLimit = 30;
+    public static final int kPeakCurrentLimit = 40;
+    public static final double kPeakCurrentDuration = 0.1;
     // Voltage compensation
     public static final double kVoltageSaturation = 12;
     public static final int kVoltageMeasurementSamples = 32;
@@ -39,9 +39,9 @@ public class IntakeConstants {
         //intakeConfiguration.slot0.kD = kDriveKD;
         kIntakeConfiguration.supplyCurrLimit = new SupplyCurrentLimitConfiguration(
             true,
-            kIntakeContinuousCurrentLimit,
-            kIntakePeakCurrentLimit,
-            kIntakePeakCurrentDuration
+            kContinuousCurrentLimit,
+            kPeakCurrentLimit,
+            kPeakCurrentDuration
         );
         kIntakeConfiguration.voltageCompSaturation = kVoltageSaturation;
         kIntakeConfiguration.voltageMeasurementFilter = kVoltageMeasurementSamples;
