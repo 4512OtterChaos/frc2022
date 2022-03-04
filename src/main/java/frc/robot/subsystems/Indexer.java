@@ -9,6 +9,11 @@ package frc.robot.subsystems;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.TalonFXSimCollection;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.REVPhysicsSim;
+import com.revrobotics.CANSparkMax.IdleMode;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+
 import static frc.robot.constants.IndexerConstants.*;
 
 import edu.wpi.first.math.VecBuilder;
@@ -23,28 +28,25 @@ import frc.robot.util.TalonUtil;
 
 public class Indexer extends SubsystemBase {
     /** Creates a new Indexer. */
-    private final WPI_TalonFX motor = new WPI_TalonFX(kMotorID);
+    private final CANSparkMax motor = new CANSparkMax(kMotorID, MotorType.kBrushless);
     private final DigitalInput bottomSensor = new DigitalInput(kBottomSensorID);
     private final DigitalInput topSensor = new DigitalInput(kTopSensorID);
 
     public Indexer() {
-        setUpIndexer(true);
-    }
-    private void setUpIndexer(boolean init){
-        if(init){
-            motor.configAllSettings(kIndexerConfiguration);
-        }
-        motor.setNeutralMode(NeutralMode.Brake);
-        motor.enableVoltageCompensation(true);
+        motor.setCANTimeout(kCANTimeout);
+
+        motor.setIdleMode(IdleMode.kBrake);
+        motor.enableVoltageCompensation(kVoltageSaturation);
         motor.setInverted(kMotorInverted);
-        TalonUtil.configStatusNormal(motor);
+        motor.setSmartCurrentLimit(kPeakCurrentLimit, kContinuousCurrentLimit);
     }
+
     @Override
     public void periodic() {
         // This method will be called once per scheduler run
     }
     public void setVoltage(double voltage){
-        motor.set(voltage / kVoltageSaturation);
+        motor.setVoltage(voltage);
     }
     public boolean getBottomSensed(){
         return bottomSensor.get();
@@ -56,30 +58,16 @@ public class Indexer extends SubsystemBase {
 
 
     // Simulation
-    private final TalonFXSimCollection flywheelMotorSim = new TalonFXSimCollection(motor);
-    private final FlywheelSim flywheelSim = new FlywheelSim(
-        LinearSystemId.identifyVelocitySystem(kFF.kv, kFF.ka),
-        DCMotor.getFalcon500(1),
-        1,
-        VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(5))
-    );
+    // init
+    {
+        REVPhysicsSim.getInstance().addSparkMax(motor, DCMotor.getNEO(1));
+    }
 
     @Override
     public void simulationPeriodic(){
-        flywheelSim.setInputVoltage(motor.getMotorOutputVoltage());
-        flywheelSim.update(0.02);
-
-        double flywheelMotorVelocityNative = TalonUtil.radiansToVelocity(
-            flywheelSim.getAngularVelocityRadPerSec(),
-            1
-        );
-        flywheelMotorSim.setIntegratedSensorVelocity((int)flywheelMotorVelocityNative);
-        flywheelMotorSim.setSupplyCurrent(flywheelSim.getCurrentDrawAmps()/2);
-
-        flywheelMotorSim.setBusVoltage(RobotController.getBatteryVoltage());
     }
 
     public double getCurrentDraw(){
-        return motor.getSupplyCurrent();
+        return motor.getOutputCurrent();
     }
 }

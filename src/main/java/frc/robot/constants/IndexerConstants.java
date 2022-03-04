@@ -21,26 +21,11 @@ public class IndexerConstants {
     );
     
     // Current limits
-    public static final int kIndexerContinuousCurrentLimit = 30;
-    public static final int kIndexerPeakCurrentLimit = 40;
-    public static final double kIndexerPeakCurrentDuration = 0.1;
+    public static final int kContinuousCurrentLimit = 30;
+    public static final int kPeakCurrentLimit = 40;
+    public static final double kPeakCurrentDuration = 0.1;
     // Voltage compensation
     public static final double kVoltageSaturation = 12;
     public static final int kVoltageMeasurementSamples = 32;
-
-    public static final TalonFXConfiguration kIndexerConfiguration = new TalonFXConfiguration();
-    static {
-        kIndexerConfiguration.initializationStrategy = SensorInitializationStrategy.BootToZero;
-        //IndexerConfiguration.slot0.kP = kDriveKP;
-        //IndexerConfiguration.slot0.kI = kDriveKI;
-        //IndexerConfiguration.slot0.kD = kDriveKD;
-        kIndexerConfiguration.supplyCurrLimit = new SupplyCurrentLimitConfiguration(
-            true,
-            kIndexerContinuousCurrentLimit,
-            kIndexerPeakCurrentLimit,
-            kIndexerPeakCurrentDuration
-        );
-        kIndexerConfiguration.voltageCompSaturation = kVoltageSaturation;
-        kIndexerConfiguration.voltageMeasurementFilter = kVoltageMeasurementSamples;
-    }
+    public static final int kCANTimeout = 100;
 }
