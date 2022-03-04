@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.AutoConstants;
 import frc.robot.constants.SwerveConstants;
+import static frc.robot.constants.AutoConstants.*;
 
 public class Drivetrain extends SubsystemBase {
 
@@ -69,6 +70,7 @@ public class Drivetrain extends SubsystemBase {
         SmartDashboard.putData("Field", field2d);
 
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
+        thetaController.setTolerance(kThetaPositionTolerance, kThetaVelocityTolerance);
         pathController.setEnabled(true); // disable for feedforward-only auto
     }
 
@@ -115,6 +117,12 @@ public class Drivetrain extends SubsystemBase {
         );
         // command robot to reach the target ChassisSpeeds
         setChassisSpeeds(targetChassisSpeeds, false, false);
+    }
+    public boolean driveRotate(Rotation2d targetRotation){
+        double rotationRadians = getPose().getRotation().getRadians();
+        double pidOutput = thetaController.calculate(rotationRadians, targetRotation.getRadians());
+        setChassisSpeeds(new ChassisSpeeds(0, 0, pidOutput), false, true);
+        return thetaController.atGoal();
     }
 
     /**

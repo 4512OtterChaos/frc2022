@@ -10,12 +10,25 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.auto.AutoOptions;
 import frc.robot.common.OCXboxController;
+import frc.robot.common.ShotMap;
 import frc.robot.constants.AutoConstants;
+import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Drivetrain;
+import frc.robot.subsystems.Indexer;
+import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.Superstructure;
 
 public class RobotContainer {
-    
+    private final Climber climber = new Climber();
     private final Drivetrain drivetrain = new Drivetrain();
+    private final Indexer indexer = new Indexer();
+    private final Intake intake = new Intake();
+    private final Shooter shooter = new Shooter();
+    private final ShotMap shotMap = new ShotMap(shooter);
+    private final Superstructure superstructure = new Superstructure(climber, drivetrain, indexer, intake, shooter, shotMap);
+
+    private final OCXboxController controller = new OCXboxController(0);
 
     private final OCXboxController driver = new OCXboxController(0);
     private boolean isFieldRelative = true;
@@ -88,6 +101,27 @@ public class RobotContainer {
             drivetrain.setModuleStates(states, false, true);
         }, drivetrain);
 
+        controller.povDownButton.whenPressed(()-> climber.setClimberVolts(-4), climber)
+        .whenReleased(()->climber.setClimberVolts(0), climber);
+
+        controller.povUpButton.whenPressed(()-> climber.setClimberVolts(4), climber)
+        .whenReleased(()->climber.setClimberVolts(0), climber);
+
+        controller.leftStick.whenPressed(()->intake.setVoltage(-8), intake)
+        .whenReleased(()->intake.setVoltage(0), intake);
+        
+        controller.rightTriggerButton.whenPressed(superstructure.intakeIndexBalls())
+        .whenReleased(()->{
+            indexer.setVoltage(0);
+            intake.setVoltage(0);
+        }, indexer, intake);
+        controller.xButton.whenPressed(()->intake.setExtended(false));
+        controller.leftBumper.whenPressed(superstructure.fenderShoot())
+        .whenReleased(()->{
+            shooter.setRPM(0);
+            indexer.setVoltage(0);
+        }, shooter, indexer);
+        
     }
 
     public double getCurrentDraw(){
@@ -98,6 +132,6 @@ public class RobotContainer {
 
     public void log(){
         drivetrain.log();
-        if(DriverStation.isFMSAttached()) NetworkTableInstance.getDefault().flush();
+        if(!DriverStation.isFMSAttached()) NetworkTableInstance.getDefault().flush();
     }
 }

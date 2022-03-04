@@ -5,6 +5,7 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
@@ -71,14 +72,26 @@ public class Superstructure extends SubsystemBase {
             ()->{}, 
             ()->{
                 //shooter setState to odometry distance
-                double distance = drivetrain.getPose().getTranslation().getDistance(FieldUtil.kFieldCenter);
+                Translation2d driveTranslation = drivetrain.getPose().getTranslation();
+                double distance = driveTranslation.getDistance(FieldUtil.kFieldCenter);
+
                 distance = Units.metersToInches(distance);
-                shooter.setState(shotMap.find(distance));
+                Shooter.State targetShooterState = shotMap.find(distance);
+                shooter.setState(targetShooterState);
                 //Drivetrain heading target to hub
-                drivetrain.driveRotate(new Rotation2d());
+                boolean driveAtGoal = drivetrain.driveRotate(FieldUtil.getAngleToCenter(driveTranslation));
                 //Indexer feed when shooter && drivetrain ready
+                if(driveAtGoal && shooter.getState().withinTolerance(targetShooterState)){
+                    indexer.setVoltage(3.5);
+                }
+                else{
+                    indexer.setVoltage(0);
+                }
             }, 
-            (interrupted)->shooter.setRPM(0), ()->false, drivetrain, shooter, indexer);
+            (interrupted)->{
+                shooter.setRPM(0);
+                indexer.setVoltage(0);
+            }, ()->false, drivetrain, shooter, indexer);
     }
     public Command setShooterState(Shooter.State state){
         return new InstantCommand(()->shooter.setState(state), shooter)
