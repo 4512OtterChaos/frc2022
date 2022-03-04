@@ -15,8 +15,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import static frc.robot.constants.ClimberConstants.*;
 
 public class Climber extends SubsystemBase {
-    private final CANSparkMax leftMotor = new CANSparkMax(0, MotorType.kBrushless);
-    private final CANSparkMax rightMotor = new CANSparkMax(0, MotorType.kBrushless);
+    private final CANSparkMax leftMotor = new CANSparkMax(kLeftMotorID, MotorType.kBrushless);
+    private final CANSparkMax rightMotor = new CANSparkMax(kRightMotorID, MotorType.kBrushless);
     private final RelativeEncoder leftEncoder = leftMotor.getEncoder();
     private final RelativeEncoder rightEncoder = rightMotor.getEncoder();
     private final ProfiledPIDController leftController = new ProfiledPIDController(kP, kI, kD, kConstraints);
@@ -28,7 +28,7 @@ public class Climber extends SubsystemBase {
 
     /** Creates a new Climber. */
     public Climber() {
-        //set inversions idk?
+        
         leftEncoder.setPositionConversionFactor(kTopHeight/kEncoderCountsTop);
         rightEncoder.setPositionConversionFactor(kTopHeight/kEncoderCountsTop);
         leftEncoder.setPosition(0);

@@ -145,6 +145,10 @@ public class Shooter extends SubsystemBase {
         public State(){
             this(0, 0);
         }
+        public boolean withinTolerance(State other){
+            double rpmError = Math.abs(other.rpm - rpm);
+            return rpmError <= kRPMTolerance && hoodMM == other.hoodMM;
+        }
         
         @Override
         public State interpolate(State endValue, double t) {
