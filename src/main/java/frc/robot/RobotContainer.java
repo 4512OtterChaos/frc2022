@@ -105,8 +105,15 @@ public class RobotContainer {
         controller.povUpButton.whenPressed(()-> climber.setVolts(4), climber)
         .whenReleased(()->climber.setVolts(0), climber);
 
-        controller.leftStick.whenPressed(()->intake.setVoltage(-8), intake)
-        .whenReleased(()->intake.setVoltage(0), intake);
+        controller.leftStick
+            .whenPressed(()->{
+                intake.setVoltage(-8);
+                indexer.setVoltage(-8);
+            }, intake, indexer)
+            .whenReleased(()->{
+                intake.setVoltage(0);
+                indexer.setVoltage(0);
+            }, intake, indexer);
         
         controller.rightTriggerButton.whenPressed(superstructure.intakeIndexBalls())
         .whenReleased(()->{
@@ -132,6 +139,7 @@ public class RobotContainer {
         double sum = 0;
         sum += drivetrain.getCurrentDraw();
         sum += shooter.getCurrentDraw();
+        sum += indexer.getCurrentDraw();
         return sum;
     }
 
