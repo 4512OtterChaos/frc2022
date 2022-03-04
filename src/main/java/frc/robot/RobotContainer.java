@@ -121,6 +121,12 @@ public class RobotContainer {
             shooter.setRPM(0);
             indexer.setVoltage(0);
         }, shooter, indexer);
+
+        controller.leftTriggerButton.whenPressed(superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC())
+        .whenReleased(()->{
+            shooter.setRPM(0);
+            indexer.setVoltage(0);
+        }, drivetrain, shooter, indexer);
         
     }
 
