@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import com.revrobotics.REVPhysicsSim;
+
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
@@ -82,6 +84,7 @@ public class Robot extends TimedRobot {
     }
     @Override
     public void simulationPeriodic(){
+        REVPhysicsSim.getInstance().run();
         // calculate voltage sag due to current draw
         RoboRioSim.setVInVoltage(BatterySim.calculateDefaultBatteryLoadedVoltage(container.getCurrentDraw()));
     }

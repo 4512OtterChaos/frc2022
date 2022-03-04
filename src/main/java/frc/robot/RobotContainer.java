@@ -6,12 +6,10 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.auto.AutoOptions;
 import frc.robot.common.OCXboxController;
 import frc.robot.common.ShotMap;
-import frc.robot.constants.AutoConstants;
 import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Indexer;
@@ -101,11 +99,11 @@ public class RobotContainer {
             drivetrain.setModuleStates(states, false, true);
         }, drivetrain);
 
-        controller.povDownButton.whenPressed(()-> climber.setClimberVolts(-4), climber)
-        .whenReleased(()->climber.setClimberVolts(0), climber);
+        controller.povDownButton.whenPressed(()-> climber.setVolts(-4), climber)
+        .whenReleased(()->climber.setVolts(0), climber);
 
-        controller.povUpButton.whenPressed(()-> climber.setClimberVolts(4), climber)
-        .whenReleased(()->climber.setClimberVolts(0), climber);
+        controller.povUpButton.whenPressed(()-> climber.setVolts(4), climber)
+        .whenReleased(()->climber.setVolts(0), climber);
 
         controller.leftStick.whenPressed(()->intake.setVoltage(-8), intake)
         .whenReleased(()->intake.setVoltage(0), intake);
