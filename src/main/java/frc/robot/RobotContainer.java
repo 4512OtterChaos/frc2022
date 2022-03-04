@@ -140,6 +140,7 @@ public class RobotContainer {
         sum += drivetrain.getCurrentDraw();
         sum += shooter.getCurrentDraw();
         sum += indexer.getCurrentDraw();
+        sum += intake.getCurrentDraw();
         return sum;
     }
 

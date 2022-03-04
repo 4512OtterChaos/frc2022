@@ -4,21 +4,33 @@ import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.can.TalonFXConfiguration;
 import com.ctre.phoenix.sensors.SensorInitializationStrategy;
 
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+
 public class IntakeConstants {
     public static final int kMotorID = 11;
-    public static final int kLeftPistonExtend = 0;
-    public static final int kRightPistonExtend = 1;
-    public static final int kLeftPistonRetract = 2;
-    public static final int kRightPistonRetract = 3;
-    public static final boolean kMotorInverted = false;
-    public static final TalonFXConfiguration kIntakeConfiguration = new TalonFXConfiguration();
+    public static final int kLeftPistonExtendPort = 0;
+    public static final int kRightPistonExtendPort = 1;
+    public static final int kLeftPistonRetractPort = 2;
+    public static final int kRightPistonRetractPort = 3;
 
+    public static final boolean kMotorInverted = false;
+
+    // Feedforward (simulation rn)
+    public static final SimpleMotorFeedforward kFF = new SimpleMotorFeedforward(
+        0.2, // Voltage to break static friction
+        0.025, // Volts per radian per second
+        0.0025 // Volts per radian per second squared
+    );
+    
+    // Current limits
     public static final int kIntakeContinuousCurrentLimit = 30;
     public static final int kIntakePeakCurrentLimit = 40;
-    public static final double kIntakePeakCurrentDuration = 100;
+    public static final double kIntakePeakCurrentDuration = 0.1;
     // Voltage compensation
     public static final double kVoltageSaturation = 12;
     public static final int kVoltageMeasurementSamples = 32;
+
+    public static final TalonFXConfiguration kIntakeConfiguration = new TalonFXConfiguration();
 
     static {
         kIntakeConfiguration.initializationStrategy = SensorInitializationStrategy.BootToZero;
