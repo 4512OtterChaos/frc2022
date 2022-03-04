@@ -12,7 +12,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -33,7 +32,7 @@ public class AutoOptions {
         );
 
         autoOptions.addOption("Ellipse",
-            autoFollowTrajectories(
+            autoFollowInitTrajectory(
                 drivetrain,
                 TrajectoryGenerator.generateTrajectory(
                     Arrays.asList(
@@ -47,7 +46,7 @@ public class AutoOptions {
         );
 
         autoOptions.addOption("Test Normal",
-            autoFollowTrajectories(
+            autoFollowInitTrajectory(
                 drivetrain,
                 TrajectoryGenerator.generateTrajectory(
                     new Pose2d(3, 3, Rotation2d.fromDegrees(0)),
@@ -65,10 +64,10 @@ public class AutoOptions {
 
         // 2022 auto mockup
         autoOptions.addOption("Mockup PathPlanner",
-            autoFollowTrajectories(
+            autoFollowInitTrajectory(
                 drivetrain,
-                AutoConstants.kMediumSpeedConfig,
-                "5 ball mockup"
+                "5 ball mockup",
+                AutoConstants.kMediumSpeedConfig
             )
         );
     }
@@ -78,21 +77,15 @@ public class AutoOptions {
      * @return A command suitable for following a sequence of trajectories in autonomous.
      * The robot pose is reset to the start of the trajectory and {@link OCSwerveFollower} is used to follow it.
      */
-    private Command autoFollowTrajectories(Drivetrain drivetrain, Trajectory... trajectories){
-        if(trajectories.length==0) return new InstantCommand(()->{}, drivetrain);
-        Trajectory combinedTrajectory = new Trajectory();
-        for(Trajectory trajectory : trajectories){        
-            combinedTrajectory = combinedTrajectory.concatenate(trajectory);
-        }
-
-        final Pose2d initial = (trajectories[0] instanceof PathPlannerTrajectory) ?
+    private Command autoFollowInitTrajectory(Drivetrain drivetrain, Trajectory trajectory){
+        final Pose2d initial = (trajectory instanceof PathPlannerTrajectory) ?
             new Pose2d(
-                trajectories[0].getInitialPose().getTranslation(),
-                ((PathPlannerState)((PathPlannerTrajectory)trajectories[0]).sample(0)).holonomicRotation)
+                trajectory.getInitialPose().getTranslation(),
+                ((PathPlannerState)((PathPlannerTrajectory)trajectory).sample(0)).holonomicRotation)
             :
-            trajectories[0].getInitialPose();
+            trajectory.getInitialPose();
             
-        return new OCSwerveFollower(drivetrain, combinedTrajectory).beforeStarting(()->drivetrain.resetOdometry(initial));
+        return new OCSwerveFollower(drivetrain, trajectory).beforeStarting(()->drivetrain.resetOdometry(initial));
     }
     /**
      * @param config The config for this trajectory defining max velocity and acceleration
@@ -100,14 +93,10 @@ public class AutoOptions {
      * @return A command suitable for following a sequence of trajectories in autonomous.
      * The robot pose is reset to the start of the trajectory and {@link OCSwerveFollower} is used to follow it.
      */
-    private Command autoFollowTrajectories(Drivetrain drivetrain, TrajectoryConfig config, String... storedPathNames){
-        Trajectory[] trajectories = new Trajectory[storedPathNames.length];
-        for(int i=0;i<storedPathNames.length;i++){
-            trajectories[i] = PathPlanner.loadPath(storedPathNames[i], config.getMaxVelocity(), config.getMaxAcceleration(), config.isReversed());
-        }
-        return autoFollowTrajectories(drivetrain, trajectories);
+    private Command autoFollowInitTrajectory(Drivetrain drivetrain, String storedPathName, TrajectoryConfig config){
+        Trajectory trajectory = PathPlanner.loadPath(storedPathName, config.getMaxVelocity(), config.getMaxAcceleration(), config.isReversed());
+        return autoFollowInitTrajectory(drivetrain, trajectory);
     }
-
 
     // Network Tables
     public Command getSelected(){

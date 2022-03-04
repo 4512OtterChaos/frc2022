@@ -234,4 +234,10 @@ public class Drivetrain extends SubsystemBase {
         chassisOmega = Math.toDegrees(chassisOmega);
         gyroSim.addHeading(chassisOmega*0.02);
     }
+
+    public double getCurrentDraw(){
+        double sum = 0;
+        for(SwerveModule module : swerveMods) sum += module.getDriveCurrentDraw() + module.getSteerCurrentDraw();
+        return sum;
+    }
 }
