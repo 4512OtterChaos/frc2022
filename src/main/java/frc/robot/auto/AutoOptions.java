@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.commands.OCSwerveFollower;
 import frc.robot.common.ShotMap;
 import frc.robot.constants.AutoConstants;
@@ -104,6 +105,21 @@ public class AutoOptions {
             .withTimeout(3)
             )
 
+        );
+
+        //Don't use backup only as last resort 
+        autoOptions.addOption("Backup", 
+            new RunCommand(()->drivetrain.drive(0.4, 0, 0, false, false), drivetrain)
+            .withTimeout(3)
+        );
+
+        autoOptions.addOption("Fender Shoot Backup", 
+            superstructure.fenderShoot()
+            .withTimeout(3)
+            .andThen(
+                new RunCommand(()->drivetrain.drive(0.4, 0, 0, false, false), drivetrain)
+                .withTimeout(3)
+            )
         );
     }
 
