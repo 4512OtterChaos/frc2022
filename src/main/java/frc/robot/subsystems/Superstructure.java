@@ -80,7 +80,8 @@ public class Superstructure extends SubsystemBase {
                 Shooter.State targetShooterState = shotMap.find(distance);
                 shooter.setState(targetShooterState);
                 //Drivetrain heading target to hub
-                boolean driveAtGoal = drivetrain.driveRotate(FieldUtil.getAngleToCenter(driveTranslation));
+                Rotation2d angleToCenter = FieldUtil.getAngleToCenter(driveTranslation);
+                boolean driveAtGoal = drivetrain.driveRotate(angleToCenter.plus(new Rotation2d(Math.PI)));
                 //Indexer feed when shooter && drivetrain ready
                 if(driveAtGoal && shooter.getState().withinTolerance(targetShooterState)){
                     indexer.setVoltage(3.5);

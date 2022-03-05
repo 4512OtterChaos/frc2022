@@ -5,7 +5,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 
 public class FieldUtil {
-    public static final Translation2d kFieldCenter = new Translation2d(Units.feetToMeters(54/2), Units.feetToMeters(27));
+    public static final Translation2d kFieldCenter = new Translation2d(Units.feetToMeters(54/2), Units.feetToMeters(27/2));
     public static Rotation2d getAngleTo(Translation2d from, Translation2d to){
         double x = to.getX() - from.getX();
         double y = to.getY() - from.getY();
