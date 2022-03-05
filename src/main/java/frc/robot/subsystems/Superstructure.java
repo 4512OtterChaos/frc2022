@@ -39,8 +39,9 @@ public class Superstructure extends SubsystemBase {
         // This method will be called once per scheduler run
     }
     public Command intakeIndexBalls(){
-        return new InstantCommand(()->intake.setExtended(true), intake)
-        .andThen(new WaitCommand(0.3))
+        //return new InstantCommand(()->intake.setExtended(true), intake)
+        //.andThen(new WaitCommand(0.3))
+        return new InstantCommand()
         .andThen(new StartEndCommand(
             ()->intake.setVoltage(6), 
             ()->intake.setVoltage(0),

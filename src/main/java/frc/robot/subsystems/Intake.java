@@ -25,8 +25,8 @@ public class Intake extends SubsystemBase {
     /** Creates a new Intake. */
     private final WPI_TalonFX motor = new WPI_TalonFX(kMotorID);
     
-    private final DoubleSolenoid leftPiston = new DoubleSolenoid( PneumaticsModuleType.CTREPCM,kLeftPistonExtendPort, kLeftPistonRetractPort);
-    private final DoubleSolenoid rightPiston = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, kRightPistonExtendPort, kRightPistonRetractPort);
+    // final DoubleSolenoid leftPiston = new DoubleSolenoid( PneumaticsModuleType.CTREPCM,kLeftPistonExtendPort, kLeftPistonRetractPort);
+   // private final DoubleSolenoid rightPiston = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, kRightPistonExtendPort, kRightPistonRetractPort);
 
 
     public Intake() {
@@ -49,12 +49,13 @@ public class Intake extends SubsystemBase {
     public void setVoltage(double voltage){
         motor.set(voltage / kVoltageSaturation);
     }
+    /*
     public void setExtended(boolean extended){
         DoubleSolenoid.Value value = extended ? Value.kForward : Value.kReverse;
         leftPiston.set(value);
         rightPiston.set(value);
     }
-
+    */
 
 
     // Simulation

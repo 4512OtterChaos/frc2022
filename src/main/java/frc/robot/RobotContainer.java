@@ -31,7 +31,7 @@ public class RobotContainer {
     private final OCXboxController driver = new OCXboxController(0);
     private boolean isFieldRelative = true;
 
-    private final AutoOptions autoOptions = new AutoOptions(drivetrain);
+    private final AutoOptions autoOptions = new AutoOptions(climber, drivetrain, indexer, intake, shooter, shotMap, superstructure);
 
     public RobotContainer(){
 
@@ -120,7 +120,7 @@ public class RobotContainer {
             indexer.setVoltage(0);
             intake.setVoltage(0);
         }, indexer, intake);
-        controller.xButton.whenPressed(()->intake.setExtended(false));
+        //controller.xButton.whenPressed(()->intake.setExtended(false));
         controller.leftBumper.whenPressed(superstructure.fenderShoot())
         .whenReleased(()->{
             shooter.setRPM(0);
