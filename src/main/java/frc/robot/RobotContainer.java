@@ -59,9 +59,9 @@ public class RobotContainer {
         // pass the joysticks for forward, strafe, and angular control
         Command teleopDrive = new RunCommand(()->{
             drivetrain.drive(
-                driver.getForward(),
-                driver.getStrafe(),
-                driver.getTurn(),
+                driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
+                driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
+                driver.getTurn() * drivetrain.getMaxAngularVelocityRadians(),
                 true,
                 isFieldRelative);
         }, drivetrain).beforeStarting(()->driver.resetLimiters());
@@ -126,7 +126,13 @@ public class RobotContainer {
             indexer.setVoltage(0);
         }, shooter, indexer);
 
-        driver.leftTriggerButton.whenPressed(superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(10))
+        driver.leftTriggerButton.whenPressed(
+            superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(
+                ()->driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
+                ()->driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
+                true
+            )
+        )
         .whenReleased(()->{
             shooter.setRPM(0);
             indexer.setVoltage(0);

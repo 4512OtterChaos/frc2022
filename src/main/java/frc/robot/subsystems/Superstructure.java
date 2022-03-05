@@ -4,6 +4,8 @@
 
 package frc.robot.subsystems;
 
+import java.util.function.DoubleSupplier;
+
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
@@ -68,7 +70,9 @@ public class Superstructure extends SubsystemBase {
             
     }
     //Cool shooting
-    public Command otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(double timeout){
+    public Command otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(
+        DoubleSupplier vxMeters, DoubleSupplier vyMeters, boolean fieldRelative
+        ){
         return new FunctionalCommand(
             ()->{}, 
             ()->{
@@ -81,7 +85,12 @@ public class Superstructure extends SubsystemBase {
                 shooter.setState(targetShooterState);
                 //Drivetrain heading target to hub
                 Rotation2d angleToCenter = FieldUtil.getAngleToCenter(driveTranslation);
-                boolean driveAtGoal = drivetrain.driveRotate(angleToCenter.plus(new Rotation2d(Math.PI)));
+                boolean driveAtGoal = drivetrain.driveRotate(
+                    angleToCenter.plus(new Rotation2d(Math.PI)),
+                    vxMeters.getAsDouble(),
+                    vyMeters.getAsDouble(),
+                    fieldRelative
+                );
                 //Indexer feed when shooter && drivetrain ready
                 if(driveAtGoal && shooter.getState().withinTolerance(targetShooterState)){
                     indexer.setVoltage(3.5);
@@ -96,7 +105,11 @@ public class Superstructure extends SubsystemBase {
             },
             ()->false,
             drivetrain, shooter, indexer
-        ).withTimeout(timeout);
+        );
+    }
+    public Command otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(double timeout){
+        return otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(()->0, ()->0, false)
+            .withTimeout(timeout);
     }
     public Command setShooterState(Shooter.State state){
         return new InstantCommand(()->shooter.setState(state), shooter)

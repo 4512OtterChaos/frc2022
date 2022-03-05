@@ -89,15 +89,15 @@ public class Drivetrain extends SubsystemBase {
     /**
      * Basic teleop drive control; percentages representing vx, vy, and omega
      * are converted to chassis speeds for the robot to follow
-     * @param vxPercent vx (forward)
-     * @param vyPercent vy (strafe)
-     * @param omegaPercent omega (rotation CCW+)
+     * @param vxMeters vx (forward)
+     * @param vyMeters vy (strafe)
+     * @param omegaRadians omega (rotation CCW+)
      * @param fieldRelative If is field-relative control
      */
-    public void drive(double vxPercent, double vyPercent, double omegaPercent, boolean openLoop, boolean fieldRelative){
-        double vx = vxPercent * SwerveConstants.kMaxLinearSpeed;
-        double vy = vyPercent * SwerveConstants.kMaxLinearSpeed;
-        double omega = omegaPercent * SwerveConstants.kMaxAngularSpeed;
+    public void drive(double vxMeters, double vyMeters, double omegaRadians, boolean openLoop, boolean fieldRelative){
+        double vx = vxMeters;
+        double vy = vyMeters;
+        double omega = omegaRadians;
         ChassisSpeeds targetChassisSpeeds;
         if(fieldRelative){
             targetChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, omega, getHeading());
@@ -118,11 +118,25 @@ public class Drivetrain extends SubsystemBase {
         // command robot to reach the target ChassisSpeeds
         setChassisSpeeds(targetChassisSpeeds, false, false);
     }
-    public boolean driveRotate(Rotation2d targetRotation){
+    public boolean driveRotate(Rotation2d targetRotation, double vxMeters, double vyMeters, boolean fieldRelative){
+        // rotation speed
         double rotationRadians = getPose().getRotation().getRadians();
         double pidOutput = thetaController.calculate(rotationRadians, targetRotation.getRadians());
-        setChassisSpeeds(new ChassisSpeeds(0, 0, pidOutput), false, true);
+
+        // + translation speed
+        ChassisSpeeds targetChassisSpeeds;
+        if(fieldRelative){
+            targetChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(vxMeters, vyMeters, pidOutput, getHeading());
+        }
+        else{
+            targetChassisSpeeds = new ChassisSpeeds(vxMeters,vyMeters,pidOutput);
+        }
+
+        setChassisSpeeds(targetChassisSpeeds, false, true);
         return thetaController.atGoal();
+    }
+    public boolean driveRotate(Rotation2d targetRotation){
+        return driveRotate(targetRotation, 0, 0, false);
     }
 
     /**
@@ -177,6 +191,13 @@ public class Drivetrain extends SubsystemBase {
         double[] ypr = new double[3];
         gyro.getYawPitchRoll(ypr);
         return Rotation2d.fromDegrees(ypr[0]);
+    }
+
+    public double getMaxLinearVelocityMeters(){
+        return SwerveConstants.kMaxLinearSpeed;
+    }
+    public double getMaxAngularVelocityRadians(){
+        return SwerveConstants.kMaxAngularSpeed;
     }
     
     /**
