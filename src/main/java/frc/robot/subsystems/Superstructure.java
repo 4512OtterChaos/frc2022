@@ -68,7 +68,7 @@ public class Superstructure extends SubsystemBase {
             
     }
     //Cool shooting
-    public Command otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(){
+    public Command otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(double timeout){
         return new FunctionalCommand(
             ()->{}, 
             ()->{
@@ -92,7 +92,10 @@ public class Superstructure extends SubsystemBase {
             (interrupted)->{
                 shooter.setRPM(0);
                 indexer.setVoltage(0);
-            }, ()->false, drivetrain, shooter, indexer);
+            },
+            ()->false,
+            drivetrain, shooter, indexer
+        ).withTimeout(timeout);
     }
     public Command setShooterState(Shooter.State state){
         return new InstantCommand(()->shooter.setState(state), shooter)

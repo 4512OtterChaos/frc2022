@@ -144,6 +144,9 @@ public class Drivetrain extends SubsystemBase {
         setModuleStates(kinematics.toSwerveModuleStates(targetChassisSpeeds), openLoop, steerInPlace);
         this.targetChassisSpeeds = targetChassisSpeeds;
     }
+    public void stop(){
+        drive(0, 0, 0, true, false);
+    }
 
     public void setBrakeOn(boolean is){
         for(SwerveModule mod : swerveMods){

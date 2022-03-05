@@ -26,8 +26,6 @@ public class RobotContainer {
     private final ShotMap shotMap = new ShotMap(shooter);
     private final Superstructure superstructure = new Superstructure(climber, drivetrain, indexer, intake, shooter, shotMap);
 
-    private final OCXboxController controller = new OCXboxController(0);
-
     private final OCXboxController driver = new OCXboxController(0);
     private boolean isFieldRelative = true;
 
@@ -48,7 +46,8 @@ public class RobotContainer {
     }
 
     public void disable(){
-        drivetrain.drive(0, 0, 0, false, false);
+        drivetrain.stop();
+        shooter.stop();
     }
 
     public void setAllBrake(boolean is){
@@ -99,13 +98,13 @@ public class RobotContainer {
             drivetrain.setModuleStates(states, false, true);
         }, drivetrain);
 
-        controller.povDownButton.whenPressed(()-> climber.setVolts(-4), climber)
+        driver.povDownButton.whenPressed(()-> climber.setVolts(-4), climber)
         .whenReleased(()->climber.setVolts(0), climber);
 
-        controller.povUpButton.whenPressed(()-> climber.setVolts(4), climber)
+        driver.povUpButton.whenPressed(()-> climber.setVolts(4), climber)
         .whenReleased(()->climber.setVolts(0), climber);
 
-        controller.leftStick
+        driver.leftStick
             .whenPressed(()->{
                 intake.setVoltage(-8);
                 indexer.setVoltage(-8);
@@ -115,19 +114,19 @@ public class RobotContainer {
                 indexer.setVoltage(0);
             }, intake, indexer);
         
-        controller.rightTriggerButton.whenPressed(superstructure.intakeIndexBalls())
+        driver.rightTriggerButton.whenPressed(superstructure.intakeIndexBalls())
         .whenReleased(()->{
             indexer.setVoltage(0);
             intake.setVoltage(0);
         }, indexer, intake);
-        //controller.xButton.whenPressed(()->intake.setExtended(false));
-        controller.leftBumper.whenPressed(superstructure.fenderShoot())
+        //driver.xButton.whenPressed(()->intake.setExtended(false));
+        driver.leftBumper.whenPressed(superstructure.fenderShoot())
         .whenReleased(()->{
             shooter.setRPM(0);
             indexer.setVoltage(0);
         }, shooter, indexer);
 
-        controller.leftTriggerButton.whenPressed(superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC())
+        driver.leftTriggerButton.whenPressed(superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(10))
         .whenReleased(()->{
             shooter.setRPM(0);
             indexer.setVoltage(0);
