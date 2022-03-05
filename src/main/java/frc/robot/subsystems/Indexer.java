@@ -23,6 +23,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.TalonUtil;
 
@@ -53,6 +54,11 @@ public class Indexer extends SubsystemBase {
     }
     public boolean getTopSensed(){
         return topSensor.get();
+    }
+
+    public void log(){
+        SmartDashboard.putBoolean("Indexer/Bottom Sensed", getBottomSensed());
+        SmartDashboard.putBoolean("Indexer/Top Sensed", getTopSensed());
     }
 
 

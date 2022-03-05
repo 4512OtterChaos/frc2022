@@ -3,19 +3,23 @@ package frc.robot;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.auto.AutoOptions;
 import frc.robot.common.OCXboxController;
 import frc.robot.common.ShotMap;
+import frc.robot.constants.ShooterConstants;
 import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Indexer;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Superstructure;
+import frc.robot.util.FieldUtil;
 
 public class RobotContainer {
     private final Climber climber = new Climber();
@@ -33,9 +37,12 @@ public class RobotContainer {
 
     public RobotContainer(){
 
-        configureDriverBinds();
+        //configureDriverBinds(driver);
+        configureTestBinds(driver);
 
         autoOptions.submit();
+
+        //LiveWindow.disableAllTelemetry();
     }
 
     public void periodic(){
@@ -54,7 +61,7 @@ public class RobotContainer {
         drivetrain.setBrakeOn(is);
     }
 
-    private void configureDriverBinds(){
+    private void configureDriverBinds(OCXboxController driver){
         // when no other command is using the drivetrain, we
         // pass the joysticks for forward, strafe, and angular control
         Command teleopDrive = new RunCommand(()->{
@@ -137,7 +144,74 @@ public class RobotContainer {
             shooter.setRPM(0);
             indexer.setVoltage(0);
         }, drivetrain, shooter, indexer);
-        
+
+        // estimate hood angle continuously before shooting
+        shooter.setDefaultCommand(new RunCommand(()->{
+            shooter.setHood(
+                shotMap.find(
+                    Units.metersToInches(
+                        drivetrain.getPose().getTranslation().getDistance(FieldUtil.kFieldCenter)
+                    )
+                ).hoodMM
+            );
+        }, shooter));
+    }
+    // Manual shot tuning
+    private void configureTestBinds(OCXboxController driver){
+        Command teleopDrive = new RunCommand(()->{
+            drivetrain.drive(
+                driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
+                driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
+                driver.getTurn() * drivetrain.getMaxAngularVelocityRadians(),
+                true,
+                isFieldRelative);
+        }, drivetrain).beforeStarting(()->driver.resetLimiters());
+        drivetrain.setDefaultCommand(teleopDrive);
+
+        // change from field-relative to robot-relative control
+        driver.backButton.whenPressed(()->{
+            isFieldRelative = !isFieldRelative;
+        });
+
+        // reset the robot heading to 0
+        driver.startButton.whenPressed(()->{
+            drivetrain.resetOdometry(
+                new Pose2d(
+                    drivetrain.getPose().getTranslation(),
+                    new Rotation2d()
+                )
+            );
+        });
+
+        driver.leftStick
+            .whenPressed(()->{
+                intake.setVoltage(-8);
+                indexer.setVoltage(-8);
+            }, intake, indexer)
+            .whenReleased(()->{
+                intake.setVoltage(0);
+                indexer.setVoltage(0);
+            }, intake, indexer);
+
+        shooter.setDefaultCommand(new RunCommand(()->{
+            double hoodDelta = 0;
+            if(driver.povUpButton.get()) hoodDelta += 1;
+            if(driver.povDownButton.get()) hoodDelta -= 1;
+            shooter.setHood(shooter.getState().hoodMM + hoodDelta);
+
+            shooter.setRPM(driver.getLeftTriggerAxis() * ShooterConstants.kMaxRPM);
+        }, shooter));
+
+        driver.rightTriggerButton
+            .whenPressed(superstructure.intakeIndexBalls())
+            .whenReleased(()->{
+                indexer.setVoltage(0);
+                intake.setVoltage(0);
+            }, indexer, intake);
+
+        driver.rightBumper
+            .whenPressed(()->indexer.setVoltage(4), indexer)
+            .whenReleased(()->indexer.setVoltage(0), indexer);
     }
 
     public double getCurrentDraw(){
@@ -151,6 +225,9 @@ public class RobotContainer {
 
     public void log(){
         drivetrain.log();
+        indexer.log();
+        shooter.log();
+        climber.log();
         if(!DriverStation.isFMSAttached()) NetworkTableInstance.getDefault().flush();
     }
 }
