@@ -10,6 +10,7 @@ public class LinearServo extends Servo{
     private final double m_length;
     private double setPos;
     private double curPos;
+    private double maxPos;
     private double lastTime = Timer.getFPGATimestamp();
     
     /**
@@ -19,11 +20,16 @@ public class LinearServo extends Servo{
     * @param length max length of the servo [mm]
     * @param speed max speed of the servo [mm/second]
     */
-    public LinearServo(int channel, double length, double speed) {
+    public LinearServo(int channel, double lengthMM, double speedMM) {
         super(channel);
         setBounds(2.0, 1.8, 1.5, 1.2, 1.0);
-        m_length = length;
-        m_speed = speed;
+        m_length = lengthMM;
+        maxPos = m_length;
+        m_speed = speedMM;
+    }
+
+    public void setMaxPos(double lengthMM){
+        maxPos = lengthMM;
     }
     
     /**
@@ -32,7 +38,7 @@ public class LinearServo extends Servo{
     * @param setpoint the target position of the servo [mm]
     */
     public void setPosition(double setpoint){
-        setPos = MathUtil.clamp(setpoint, 0, m_length);
+        setPos = MathUtil.clamp(setpoint, 0, maxPos);
         setSpeed((setPos/m_length *2)-1);
     }
     

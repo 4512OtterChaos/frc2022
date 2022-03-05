@@ -34,6 +34,9 @@ public class Shooter extends SubsystemBase {
 
     public Shooter() {
         setupFlywheel(true);
+        
+        leftServo.setMaxPos(kServoMaxMM);
+        rightServo.setMaxPos(kServoMaxMM);
     }
 
     private void setupFlywheel(boolean init){
