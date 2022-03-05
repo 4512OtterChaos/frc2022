@@ -119,12 +119,11 @@ public class AutoOptions {
                 ((PathPlannerState)((PathPlannerTrajectory)trajectory).sample(0)).holonomicRotation)
             :
             trajectory.getInitialPose();
+        Command followCommand = new OCSwerveFollower(drivetrain, trajectory);
         if(firstTrajectory){
-            return new OCSwerveFollower(drivetrain, trajectory).beforeStarting(()->drivetrain.resetOdometry(initial));
+            followCommand = followCommand.beforeStarting(()->drivetrain.resetOdometry(initial));
         }   
-        else{
-            return new OCSwerveFollower(drivetrain, trajectory);
-        }
+        return followCommand;
     }
     /**
      * @param config The config for this trajectory defining max velocity and acceleration
