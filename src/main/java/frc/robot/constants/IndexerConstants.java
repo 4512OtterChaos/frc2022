@@ -11,7 +11,7 @@ public class IndexerConstants {
     public static final int kBottomSensorID = 0;
     public static final int kTopSensorID = 1;
     
-    public static final boolean kMotorInverted = false;
+    public static final boolean kMotorInverted = true;
 
     // Feedforward loaded with cargo (simulation rn)
     public static final SimpleMotorFeedforward kFF = new SimpleMotorFeedforward(
@@ -24,7 +24,7 @@ public class IndexerConstants {
     public static final int kContinuousCurrentLimit = 30;
     public static final int kPeakCurrentLimit = 40;
     public static final double kPeakCurrentDuration = 0.1;
-    // Voltage compensation
+    // Voltage compensation`
     public static final double kVoltageSaturation = 12;
     public static final int kVoltageMeasurementSamples = 32;
     public static final int kCANTimeout = 100;

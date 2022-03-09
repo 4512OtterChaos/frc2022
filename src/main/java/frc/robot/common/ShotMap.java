@@ -10,9 +10,9 @@ public final class ShotMap {
     private final TreeMap<Double, Shooter.State> map = new TreeMap<>();
 
     public ShotMap(Shooter shooter){
-        map.put(10.0, shooter.new State(2000, 0));
-        map.put(100.0, shooter.new State(3000, 20));
-        map.put(240.0, shooter.new State(5000, 60));
+        map.put(70.0, shooter.new State(3000, 10));
+        map.put(200.0, shooter.new State(3500, 25));
+        map.put(350.0, shooter.new State(5000, 50));
     }
 
     /**

@@ -35,7 +35,7 @@ public class Indexer extends SubsystemBase {
 
     public Indexer() {
         motor.setCANTimeout(kCANTimeout);
-
+        motor.restoreFactoryDefaults();
         motor.setIdleMode(IdleMode.kBrake);
         motor.enableVoltageCompensation(kVoltageSaturation);
         motor.setInverted(kMotorInverted);
@@ -50,10 +50,10 @@ public class Indexer extends SubsystemBase {
         motor.setVoltage(voltage);
     }
     public boolean getBottomSensed(){
-        return bottomSensor.get();
+        return !bottomSensor.get();
     }
     public boolean getTopSensed(){
-        return topSensor.get();
+        return !topSensor.get();
     }
 
     public void log(){

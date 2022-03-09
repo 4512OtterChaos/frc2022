@@ -45,7 +45,7 @@ public class Superstructure extends SubsystemBase {
         //.andThen(new WaitCommand(0.3))
         return new InstantCommand()
         .andThen(new StartEndCommand(
-            ()->intake.setVoltage(6), 
+            ()->intake.setVoltage(4), 
             ()->intake.setVoltage(0),
             intake
         ))
@@ -53,7 +53,7 @@ public class Superstructure extends SubsystemBase {
             ()->{},
             ()->{
                 if(indexer.getBottomSensed() && !indexer.getTopSensed()){
-                    indexer.setVoltage(4);
+                    indexer.setVoltage(2.5);
                 }
                 else{
                     indexer.setVoltage(0);
@@ -64,11 +64,15 @@ public class Superstructure extends SubsystemBase {
             indexer));
     }
     public Command fenderShoot(){
-        return setShooterState(shotMap.find(0))
-        .andThen(()->indexer.setVoltage(3.5), indexer); 
-            
-            
+        
+        return setShooterState(shotMap.find(0));
+        //.andThen(()->intakeIndexBalls(), indexer); 
     }
+    public Command fenderShoot2(){
+        return setShooterState(shotMap.find(130));
+        //.andThen(()->indexer.setVoltage(8), indexer); 
+    }
+    
     //Cool shooting
     public Command otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(
         DoubleSupplier vxMeters, DoubleSupplier vyMeters, boolean fieldRelative
@@ -93,7 +97,7 @@ public class Superstructure extends SubsystemBase {
                 );
                 //Indexer feed when shooter && drivetrain ready
                 if(driveAtGoal && shooter.getState().withinTolerance(targetShooterState)){
-                    indexer.setVoltage(3.5);
+                    indexer.setVoltage(5);
                 }
                 else{
                     indexer.setVoltage(0);

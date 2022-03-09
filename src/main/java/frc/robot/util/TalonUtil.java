@@ -16,6 +16,12 @@ public class TalonUtil {
             motor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, 20, 50);
         }
     }
+    
+    public static void configStatusSlow(WPI_TalonFX... motors){
+        for(WPI_TalonFX motor : motors){
+            motor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, 200, 50);
+        }
+    }
 
 
     //Conversions yuck

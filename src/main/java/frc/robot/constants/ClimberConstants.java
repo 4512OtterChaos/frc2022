@@ -7,7 +7,7 @@ public class ClimberConstants {
     public static final int kRightMotorID = 13;
     public static final boolean kMotorInverted = false;
 
-    public static final double kTopHeightRotations = 190; // motor rotations
+    public static final double kTopHeightRotations = 140; // motor rotations
     public static final double kBottomHeightRotations = 0;
 
     public static final double kP = .25;

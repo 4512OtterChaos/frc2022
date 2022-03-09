@@ -39,7 +39,7 @@ public class Intake extends SubsystemBase {
         motor.setNeutralMode(NeutralMode.Brake);
         motor.enableVoltageCompensation(true);
         motor.setInverted(kMotorInverted);
-        TalonUtil.configStatusNormal(motor);
+        TalonUtil.configStatusSlow(motor);
     }
     
     @Override

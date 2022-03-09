@@ -31,7 +31,8 @@ public class Climber extends SubsystemBase {
     public Climber() {
         leftMotor.setCANTimeout(kCANTimeout);
         rightMotor.setCANTimeout(kCANTimeout);
-
+        leftMotor.restoreFactoryDefaults();
+        rightMotor.restoreFactoryDefaults();
         leftMotor.setInverted(kMotorInverted);
         rightMotor.setInverted(kMotorInverted);
         leftMotor.enableVoltageCompensation(kVoltageSaturation);

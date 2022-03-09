@@ -125,7 +125,7 @@ public class SwerveModule {
         // convert our target radians to falcon position units
         double angleNative = TalonUtil.radiansToPosition(targetTotalAngle, kSteerGearRatio);
         // perform onboard PID to steer the module to the target angle
-        steerMotor.set(ControlMode.Position, angleNative);
+        steerMotor.set(ControlMode.MotionMagic, angleNative);
 
         // convert our target meters per second to falcon velocity units
         double velocityNative = TalonUtil.metersToVelocity(
@@ -135,7 +135,7 @@ public class SwerveModule {
         );
         // perform onboard PID with inputted feedforward to drive the module to the target velocity
         double driveFFOutput = kDriveFF.calculate(this.lastDesiredState.speedMetersPerSecond)/kVoltageSaturation;
-        if(openLoop){
+        if(!openLoop){
             driveMotor.set(
                 ControlMode.Velocity, velocityNative, // Native falcon counts per 100ms
                 DemandType.ArbitraryFeedForward, driveFFOutput // feedforward voltage to percent output

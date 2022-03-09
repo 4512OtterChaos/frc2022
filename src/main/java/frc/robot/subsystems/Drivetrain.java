@@ -1,7 +1,9 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix.sensors.BasePigeonSimCollection;
+import com.ctre.phoenix.sensors.WPI_Pigeon2;
 import com.ctre.phoenix.sensors.WPI_PigeonIMU;
+import com.ctre.phoenix.sensors.WPI_Pigeon2;
 
 import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.controller.PIDController;
@@ -25,7 +27,7 @@ import static frc.robot.constants.AutoConstants.*;
 public class Drivetrain extends SubsystemBase {
 
     private final SwerveModule[] swerveMods;
-    private final WPI_PigeonIMU gyro;
+    private final WPI_Pigeon2 gyro;
     private final BasePigeonSimCollection gyroSim; // simulate pigeon
 
     private final SwerveDriveKinematics kinematics;
@@ -55,8 +57,8 @@ public class Drivetrain extends SubsystemBase {
             new SwerveModule(SwerveConstants.Module.BR)
         };
 
-        gyro = new WPI_PigeonIMU(SwerveConstants.kPigeonID);
-        gyro.configAllSettings(SwerveConstants.pigeonConfig);
+        gyro = new WPI_Pigeon2(SwerveConstants.kPigeon2ID);
+        gyro.configAllSettings(SwerveConstants.kPigeon2Config);
         gyroSim = gyro.getSimCollection();
         zeroGyro();
 
@@ -188,9 +190,7 @@ public class Drivetrain extends SubsystemBase {
         return odometry.getPoseMeters().getRotation();
     }
     public Rotation2d getGyroYaw(){
-        double[] ypr = new double[3];
-        gyro.getYawPitchRoll(ypr);
-        return Rotation2d.fromDegrees(ypr[0]);
+        return gyro.getRotation2d();
     }
 
     public double getMaxLinearVelocityMeters(){

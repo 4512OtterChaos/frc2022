@@ -13,7 +13,7 @@ public class IntakeConstants {
     public static final int kLeftPistonRetractPort = 2;
     public static final int kRightPistonRetractPort = 3;
 
-    public static final boolean kMotorInverted = false;
+    public static final boolean kMotorInverted = true;
 
     // Feedforward (simulation rn)
     public static final SimpleMotorFeedforward kFF = new SimpleMotorFeedforward(

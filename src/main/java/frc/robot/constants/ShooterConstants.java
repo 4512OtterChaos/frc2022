@@ -14,8 +14,8 @@ public final class ShooterConstants {
     public static final int kRightMotorID = 9;
     public static final TalonFXInvertType kLeftMotorInversion = TalonFXInvertType.OpposeMaster;
     public static final TalonFXInvertType kRightMotorInversion = TalonFXInvertType.CounterClockwise;
-    public static final double kMaxRPM = 4500;
-    public static final double kRPMTolerance = 100;    
+    public static final double kMaxRPM = 5700;
+    public static final double kRPMTolerance = 500;    
     // Hood
     public static final int kLeftServoChannel = 0;
     public static final int kRightServoChannel = 1;
@@ -39,7 +39,7 @@ public final class ShooterConstants {
     );
 
     // PID
-    public static final double kP = 0;
+    public static final double kP = 0.02;
     public static final double kI = 0;
     public static final double kD = 0;
 

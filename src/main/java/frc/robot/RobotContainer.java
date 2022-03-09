@@ -2,11 +2,13 @@ package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.auto.AutoOptions;
@@ -37,8 +39,8 @@ public class RobotContainer {
 
     public RobotContainer(){
 
-        //configureDriverBinds(driver);
-        configureTestBinds(driver);
+        configureDriverBinds(driver);
+        //configureTestBinds(driver);
 
         autoOptions.submit();
 
@@ -104,30 +106,49 @@ public class RobotContainer {
             };
             drivetrain.setModuleStates(states, false, true);
         }, drivetrain);
-
-        driver.povDownButton.whenPressed(()-> climber.setVolts(-4), climber)
+        //Climber down
+        driver.povDownButton.whenPressed(()-> climber.setVolts(-8), climber)
         .whenReleased(()->climber.setVolts(0), climber);
-
-        driver.povUpButton.whenPressed(()-> climber.setVolts(4), climber)
+        
+        //Climber up
+        driver.povUpButton.whenPressed(()-> climber.setVolts(8), climber)
         .whenReleased(()->climber.setVolts(0), climber);
-
+        //Clear intake and indexer
         driver.leftStick
             .whenPressed(()->{
-                intake.setVoltage(-8);
-                indexer.setVoltage(-8);
+                intake.setVoltage(-4);
+                indexer.setVoltage(-1);
             }, intake, indexer)
             .whenReleased(()->{
                 intake.setVoltage(0);
                 indexer.setVoltage(0);
             }, intake, indexer);
         
+        //
         driver.rightTriggerButton.whenPressed(superstructure.intakeIndexBalls())
         .whenReleased(()->{
             indexer.setVoltage(0);
             intake.setVoltage(0);
         }, indexer, intake);
+        
+        /*driver.rightTriggerButton
+            .whenPressed(()->{
+                intake.setVoltage(4);
+                indexer.setVoltage(4);
+            }, intake, indexer)
+            .whenReleased(()->{
+                intake.setVoltage(0);
+                indexer.setVoltage(0);
+            }, intake, indexer);
+            */
         //driver.xButton.whenPressed(()->intake.setExtended(false));
         driver.leftBumper.whenPressed(superstructure.fenderShoot())
+        .whenReleased(()->{
+            shooter.setRPM(0);
+            indexer.setVoltage(0);
+        }, shooter, indexer);
+
+        driver.aButton.whenPressed(superstructure.fenderShoot2())
         .whenReleased(()->{
             shooter.setRPM(0);
             indexer.setVoltage(0);
@@ -148,11 +169,13 @@ public class RobotContainer {
         // estimate hood angle continuously before shooting
         shooter.setDefaultCommand(new RunCommand(()->{
             shooter.setHood(
-                shotMap.find(
+                /*shotMap.find(
                     Units.metersToInches(
-                        drivetrain.getPose().getTranslation().getDistance(FieldUtil.kFieldCenter)
+                        drivetrain.getPose().getTranslation().getDistance(FieldUtil.kFieldCenter);
                     )
                 ).hoodMM
+                */
+                0
             );
         }, shooter));
     }
@@ -182,7 +205,7 @@ public class RobotContainer {
                 )
             );
         });
-
+        //Clear intake and indexer 
         driver.leftStick
             .whenPressed(()->{
                 intake.setVoltage(-8);
@@ -200,6 +223,7 @@ public class RobotContainer {
             shooter.setHood(shooter.getState().hoodMM + hoodDelta);
 
             shooter.setRPM(driver.getLeftTriggerAxis() * ShooterConstants.kMaxRPM);
+            //shooter.setShooterVoltage(driver.getLeftTriggerAxis()*12);
         }, shooter));
 
         driver.rightTriggerButton
@@ -210,7 +234,7 @@ public class RobotContainer {
             }, indexer, intake);
 
         driver.rightBumper
-            .whenPressed(()->indexer.setVoltage(4), indexer)
+            .whenPressed(()->indexer.setVoltage(7), indexer)
             .whenReleased(()->indexer.setVoltage(0), indexer);
     }
 
@@ -224,6 +248,8 @@ public class RobotContainer {
     }
 
     public void log(){
+        Translation2d driveTranslation = drivetrain.getPose().getTranslation();
+        SmartDashboard.putNumber("Shooter/DistanceInches", Units.metersToInches(driveTranslation.getDistance(FieldUtil.kFieldCenter)));
         drivetrain.log();
         indexer.log();
         shooter.log();

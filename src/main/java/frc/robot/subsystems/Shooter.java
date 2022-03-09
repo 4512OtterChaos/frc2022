@@ -50,7 +50,7 @@ public class Shooter extends SubsystemBase {
         leftMotor.enableVoltageCompensation(true);
         rightMotor.setInverted(kRightMotorInversion);
         leftMotor.follow(rightMotor);
-        leftMotor.setInverted(kRightMotorInversion);
+        leftMotor.setInverted(kLeftMotorInversion);
         TalonUtil.configStatusNormal(leftMotor, rightMotor);
     }
     
@@ -82,6 +82,10 @@ public class Shooter extends SubsystemBase {
     public void setHood(double extensionMM){
         leftServo.setPosition(extensionMM);
         rightServo.setPosition(extensionMM);
+    }
+    public void setShooterVoltage(double volts){
+        rightMotor.set(volts/kVoltageSaturation);   
+
     }
     public void setState(State state){
         setRPM(state.rpm);

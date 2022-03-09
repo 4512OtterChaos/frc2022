@@ -4,6 +4,7 @@ import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.can.TalonFXConfiguration;
 import com.ctre.phoenix.sensors.AbsoluteSensorRange;
 import com.ctre.phoenix.sensors.CANCoderConfiguration;
+import com.ctre.phoenix.sensors.Pigeon2Configuration;
 import com.ctre.phoenix.sensors.PigeonIMUConfiguration;
 import com.ctre.phoenix.sensors.SensorInitializationStrategy;
 import com.ctre.phoenix.sensors.SensorVelocityMeasPeriod;
@@ -12,11 +13,12 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
+import frc.robot.util.TalonUtil;
 
 public class SwerveConstants {
 
     private static final boolean isReal = RobotBase.isReal();
-    public static final int kPigeonID = 0;
+    public static final int kPigeon2ID = 0;
 
     // Inversions
     public static final boolean kInvertGyro = false;
@@ -82,22 +84,22 @@ public class SwerveConstants {
     );
 
     // PID
-    public static final double kDriveKP = 0.1;
+    public static final double kDriveKP = 0.025;
     public static final double kDriveKI = 0;
     public static final double kDriveKD = 0;
 
-    public static final double kSteerKP = isReal ? 0.6 : 0.1;
+    public static final double kSteerKP = isReal ? 0.3 : 0.1;
     public static final double kSteerKI = isReal ? 0 : 0;
-    public static final double kSteerKD = isReal ? 12 : 0;
-    public static final double kSteerVelocity = Units.rotationsPerMinuteToRadiansPerSecond(4);
-    public static final double kSteerAcceleration = Units.rotationsPerMinuteToRadiansPerSecond(20);
+    public static final double kSteerKD = isReal ? 1 : 0;
+    public static final double kSteerVelocity = Units.rotationsToRadians(4);
+    public static final double kSteerAcceleration = Units.rotationsToRadians(20);
     public static final int kAllowableSteeringError = 80;
 
     // The configurations applied to swerve CTRE devices
     public static final TalonFXConfiguration driveConfig = new TalonFXConfiguration();
     public static final TalonFXConfiguration steerConfig = new TalonFXConfiguration();
     public static final CANCoderConfiguration cancoderConfig = new CANCoderConfiguration();
-    public static final PigeonIMUConfiguration pigeonConfig = new PigeonIMUConfiguration();
+    public static final Pigeon2Configuration kPigeon2Config = new Pigeon2Configuration();
     public static final int kCANTimeout = 100;
 
     static {
@@ -120,6 +122,8 @@ public class SwerveConstants {
         steerConfig.slot0.kP = kSteerKP;
         steerConfig.slot0.kI = kSteerKI;
         steerConfig.slot0.kD = kSteerKD;
+        steerConfig.motionCruiseVelocity = TalonUtil.radiansToVelocity(kSteerVelocity, kSteerGearRatio);
+        steerConfig.motionAcceleration = TalonUtil.radiansToVelocity(kSteerAcceleration, kSteerGearRatio);
         steerConfig.slot0.allowableClosedloopError = kAllowableSteeringError;
         steerConfig.neutralDeadband = isReal ? 0.05 : 0.001;
         steerConfig.supplyCurrLimit = new SupplyCurrentLimitConfiguration(
