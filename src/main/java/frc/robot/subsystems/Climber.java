@@ -4,9 +4,11 @@
 
 package frc.robot.subsystems;
 
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.REVPhysicsSim;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -35,6 +37,8 @@ public class Climber extends SubsystemBase {
         rightMotor.restoreFactoryDefaults();
         leftMotor.setInverted(kMotorInverted);
         rightMotor.setInverted(kMotorInverted);
+        rightMotor.setIdleMode(IdleMode.kBrake);
+        leftMotor.setIdleMode(IdleMode.kBrake);
         leftMotor.enableVoltageCompensation(kVoltageSaturation);
         rightMotor.enableVoltageCompensation(kVoltageSaturation);
         leftMotor.setSmartCurrentLimit(kPeakCurrentLimit, kContinuousCurrentLimit);

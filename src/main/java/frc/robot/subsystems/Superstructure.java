@@ -65,8 +65,8 @@ public class Superstructure extends SubsystemBase {
     }
     public Command fenderShoot(){
         
-        return setShooterState(shotMap.find(0));
-        //.andThen(()->intakeIndexBalls(), indexer); 
+        return setShooterState(shotMap.find(0))
+        .andThen(()->indexer.setVoltage(8), indexer); 
     }
     public Command fenderShoot2(){
         return setShooterState(shotMap.find(130));

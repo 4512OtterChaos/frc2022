@@ -17,6 +17,8 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import static frc.robot.constants.IndexerConstants.*;
 
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
@@ -26,12 +28,15 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.TalonUtil;
+import static frc.robot.constants.IndexerConstants.*;
 
 public class Indexer extends SubsystemBase {
     /** Creates a new Indexer. */
     private final CANSparkMax motor = new CANSparkMax(kMotorID, MotorType.kBrushless);
     private final DigitalInput bottomSensor = new DigitalInput(kBottomSensorID);
     private final DigitalInput topSensor = new DigitalInput(kTopSensorID);
+    private final PIDController controller = new PIDController(kP, kI, kD);
+    private double targetRPM = 0;
 
     public Indexer() {
         motor.setCANTimeout(kCANTimeout);
@@ -45,10 +50,17 @@ public class Indexer extends SubsystemBase {
     @Override
     public void periodic() {
         // This method will be called once per scheduler run
+        double targetVoltage = controller.calculate(motor.getEncoder().getVelocity(), targetRPM);
+        motor.setVoltage(targetVoltage);
     }
     public void setVoltage(double voltage){
         motor.setVoltage(voltage);
     }
+    public void setRPM(double rpm){
+        targetRPM = rpm;
+        
+    }
+    
     public boolean getBottomSensed(){
         return !bottomSensor.get();
     }

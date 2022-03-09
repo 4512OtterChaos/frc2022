@@ -5,6 +5,7 @@ import com.ctre.phoenix.motorcontrol.can.TalonFXConfiguration;
 import com.ctre.phoenix.sensors.SensorInitializationStrategy;
 
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 
 public class IndexerConstants {
     public static final int kMotorID = 10;
@@ -28,4 +29,8 @@ public class IndexerConstants {
     public static final double kVoltageSaturation = 12;
     public static final int kVoltageMeasurementSamples = 32;
     public static final int kCANTimeout = 100;
+
+    public static final double kP = 0.1;
+    public static final double kI = 0;
+    public static final double kD = 0;
 }

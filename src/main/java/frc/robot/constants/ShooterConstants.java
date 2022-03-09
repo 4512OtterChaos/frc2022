@@ -39,7 +39,7 @@ public final class ShooterConstants {
     );
 
     // PID
-    public static final double kP = 0.02;
+    public static final double kP = 0;
     public static final double kI = 0;
     public static final double kD = 0;
 
