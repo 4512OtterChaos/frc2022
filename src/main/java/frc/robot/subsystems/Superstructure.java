@@ -9,6 +9,7 @@ import java.util.function.DoubleSupplier;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.util.function.BooleanConsumer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -46,6 +47,10 @@ public class Superstructure extends SubsystemBase {
         // This method will be called once per scheduler run
     }
     public Command intakeIndexBalls(){
+        return intakeIndexBalls((bool)->{});
+    }
+
+    public Command intakeIndexBalls(BooleanConsumer indexingCargo){
         //return new InstantCommand(()->intake.setExtended(true), intake)
         //.andThen(new WaitCommand(0.3))
         return new InstantCommand()
@@ -59,9 +64,11 @@ public class Superstructure extends SubsystemBase {
             ()->{
                 if(indexer.getBottomSensed() && !indexer.getTopSensed()){
                     indexer.setVoltage(2.5);
+                    indexingCargo.accept(true);
                 }
                 else{
                     indexer.setVoltage(0);
+                    indexingCargo.accept(false);
                 }
             },
             (interrupted)->indexer.setVoltage(0),

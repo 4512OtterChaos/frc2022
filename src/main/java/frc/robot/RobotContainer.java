@@ -7,6 +7,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -125,11 +126,21 @@ public class RobotContainer {
             }, intake, indexer);
         
         //
-        driver.rightTriggerButton.whenPressed(superstructure.intakeIndexBalls())
-        .whenReleased(()->{
-            indexer.setVoltage(0);
-            intake.setVoltage(0);
-        }, indexer, intake);
+        driver.rightTriggerButton
+            .whenPressed(superstructure.intakeIndexBalls(
+                (isIndexing)->{
+                    if(isIndexing){
+                        driver.setRumble(RumbleType.kRightRumble, 0.5);
+                    }
+                    else{
+                        driver.setRumble(RumbleType.kRightRumble, 0);
+                    }
+                }
+            ))
+            .whenReleased(()->{
+                indexer.setVoltage(0);
+                intake.setVoltage(0);
+            }, indexer, intake);
         
         /*driver.rightTriggerButton
             .whenPressed(()->{
