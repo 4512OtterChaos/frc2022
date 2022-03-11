@@ -16,7 +16,7 @@ import frc.robot.auto.AutoOptions;
 import frc.robot.common.OCXboxController;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.climber.Climber;
-import frc.robot.subsystems.drivetrain.Drivetrain;
+import frc.robot.subsystems.drivetrain.SwerveDrive;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
@@ -26,7 +26,7 @@ import frc.robot.util.FieldUtil;
 
 public class RobotContainer {
     private final Climber climber = new Climber();
-    private final Drivetrain drivetrain = new Drivetrain();
+    private final SwerveDrive drivetrain = new SwerveDrive();
     private final Indexer indexer = new Indexer();
     private final Intake intake = new Intake();
     private final Shooter shooter = new Shooter();

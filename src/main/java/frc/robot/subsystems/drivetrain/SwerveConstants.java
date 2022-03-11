@@ -33,7 +33,7 @@ public class SwerveConstants {
     public static final double kMaxAngularSpeed = Units.degreesToRadians(720);
     public static final double kWheelDiameter = Units.inchesToMeters(4);
     public static final double kWheelCircumference = kWheelDiameter*Math.PI;
-    public static final double kDriveGearRatio = 6.75; // 6.75:1
+    public static final double kDriveGearRatio = 6.12; // 6.12:1 L3 ratio
     public static final double kSteerGearRatio = 12.8; // 12.8:1
 
     public enum Module {

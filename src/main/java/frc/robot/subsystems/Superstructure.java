@@ -18,7 +18,7 @@ import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.subsystems.climber.Climber;
-import frc.robot.subsystems.drivetrain.Drivetrain;
+import frc.robot.subsystems.drivetrain.SwerveDrive;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
@@ -28,12 +28,12 @@ import frc.robot.util.FieldUtil;
 public class Superstructure extends SubsystemBase {
     /** Creates a new Superstructure. */
     private final Climber climber;
-    private final Drivetrain drivetrain;
+    private final SwerveDrive drivetrain;
     private final Indexer indexer;
     private final Intake intake;
     private final Shooter shooter;
     private final ShotMap shotMap;
-    public Superstructure(Climber climber, Drivetrain drivetrain, Indexer indexer, Intake intake, Shooter shooter, ShotMap shotMap) {
+    public Superstructure(Climber climber, SwerveDrive drivetrain, Indexer indexer, Intake intake, Shooter shooter, ShotMap shotMap) {
         this.climber = climber;
         this.drivetrain = drivetrain;
         this.indexer = indexer;

@@ -11,7 +11,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import frc.robot.subsystems.drivetrain.Drivetrain;
+import frc.robot.subsystems.drivetrain.SwerveDrive;
 
 /**
  * Custom implementation of
@@ -20,11 +20,11 @@ import frc.robot.subsystems.drivetrain.Drivetrain;
  */
 public class OCSwerveFollower extends CommandBase {
 
-    private final Drivetrain drivetrain;
+    private final SwerveDrive drivetrain;
     private final Trajectory trajectory;
     private Timer timer = new Timer();
 
-    public OCSwerveFollower(Drivetrain drivetrain, Trajectory trajectory) {
+    public OCSwerveFollower(SwerveDrive drivetrain, Trajectory trajectory) {
         this.drivetrain = drivetrain;
         this.trajectory = trajectory;
 

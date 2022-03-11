@@ -21,7 +21,7 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.commands.OCSwerveFollower;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.climber.Climber;
-import frc.robot.subsystems.drivetrain.Drivetrain;
+import frc.robot.subsystems.drivetrain.SwerveDrive;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
@@ -32,7 +32,7 @@ public class AutoOptions {
     // list of choosable commands that decides what is run in auto
     private SendableChooser<Command> autoOptions = new SendableChooser<>();
 
-    public AutoOptions(Climber climber, Drivetrain drivetrain, Indexer indexer, Intake intake, Shooter shooter, ShotMap shotMap, Superstructure superstructure){
+    public AutoOptions(Climber climber, SwerveDrive drivetrain, Indexer indexer, Intake intake, Shooter shooter, ShotMap shotMap, Superstructure superstructure){
 
         autoOptions.setDefaultOption("Nothing",
             new InstantCommand(()->drivetrain.stop(), drivetrain)
@@ -246,7 +246,7 @@ public class AutoOptions {
      * @return A command suitable for following a sequence of trajectories in autonomous.
      * The robot pose is reset to the start of the trajectory and {@link OCSwerveFollower} is used to follow it.
      */
-    private Command autoFollowTrajectory(Drivetrain drivetrain, Trajectory trajectory, boolean firstTrajectory){
+    private Command autoFollowTrajectory(SwerveDrive drivetrain, Trajectory trajectory, boolean firstTrajectory){
         final Pose2d initial = (trajectory instanceof PathPlannerTrajectory) ?
             new Pose2d(
                 trajectory.getInitialPose().getTranslation(),
@@ -265,7 +265,7 @@ public class AutoOptions {
      * @return A command suitable for following a sequence of trajectories in autonomous.
      * The robot pose is reset to the start of the trajectory and {@link OCSwerveFollower} is used to follow it.
      */
-    private Command autoFollowTrajectory(Drivetrain drivetrain, String storedPathName, TrajectoryConfig config, boolean firstTrajectory){
+    private Command autoFollowTrajectory(SwerveDrive drivetrain, String storedPathName, TrajectoryConfig config, boolean firstTrajectory){
         Trajectory trajectory = PathPlanner.loadPath(storedPathName, config.getMaxVelocity(), config.getMaxAcceleration(), config.isReversed());
         return autoFollowTrajectory(drivetrain, trajectory, firstTrajectory);
     }

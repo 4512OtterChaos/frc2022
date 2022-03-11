@@ -24,7 +24,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.auto.AutoConstants;
 
-public class Drivetrain extends SubsystemBase {
+public class SwerveDrive extends SubsystemBase {
 
     private final SwerveModule[] swerveMods;
     private final WPI_Pigeon2 gyro;
@@ -48,7 +48,7 @@ public class Drivetrain extends SubsystemBase {
 
     private final Field2d field2d = new Field2d();
     
-    public Drivetrain() {
+    public SwerveDrive() {
         // construct our modules in order with their specific constants
         swerveMods = new SwerveModule[]{
             new SwerveModule(SwerveConstants.Module.FL),
