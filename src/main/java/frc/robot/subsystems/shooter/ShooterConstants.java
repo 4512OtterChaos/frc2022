@@ -1,4 +1,4 @@
-package frc.robot.constants;
+package frc.robot.subsystems.shooter;
 
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.TalonFXInvertType;

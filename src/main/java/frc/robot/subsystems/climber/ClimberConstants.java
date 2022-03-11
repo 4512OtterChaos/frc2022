@@ -1,4 +1,4 @@
-package frc.robot.constants;
+package frc.robot.subsystems.climber;
 
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 

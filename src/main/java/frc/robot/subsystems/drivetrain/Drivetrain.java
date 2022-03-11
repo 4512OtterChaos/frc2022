@@ -1,4 +1,6 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.drivetrain;
+
+import static frc.robot.auto.AutoConstants.*;
 
 import com.ctre.phoenix.sensors.BasePigeonSimCollection;
 import com.ctre.phoenix.sensors.WPI_Pigeon2;
@@ -20,9 +22,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.constants.AutoConstants;
-import frc.robot.constants.SwerveConstants;
-import static frc.robot.constants.AutoConstants.*;
+import frc.robot.auto.AutoConstants;
 
 public class Drivetrain extends SubsystemBase {
 

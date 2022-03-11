@@ -1,4 +1,4 @@
-package frc.robot.common;
+package frc.robot.subsystems.shooter;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.Servo;

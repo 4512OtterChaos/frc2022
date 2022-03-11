@@ -1,4 +1,4 @@
-package frc.robot.constants;
+package frc.robot.auto;
 
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;

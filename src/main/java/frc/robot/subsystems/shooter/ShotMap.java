@@ -1,9 +1,8 @@
-package frc.robot.common;
+package frc.robot.subsystems.shooter;
 
 import java.util.TreeMap;
 
 import edu.wpi.first.math.MathUtil;
-import frc.robot.subsystems.Shooter;
 
 public final class ShotMap {
 

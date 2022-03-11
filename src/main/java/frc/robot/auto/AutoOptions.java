@@ -19,14 +19,13 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.commands.OCSwerveFollower;
-import frc.robot.common.ShotMap;
-import frc.robot.constants.AutoConstants;
-import frc.robot.subsystems.Climber;
-import frc.robot.subsystems.Drivetrain;
-import frc.robot.subsystems.Indexer;
-import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Superstructure;
+import frc.robot.subsystems.climber.Climber;
+import frc.robot.subsystems.drivetrain.Drivetrain;
+import frc.robot.subsystems.indexer.Indexer;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.ShotMap;
 
 public class AutoOptions {
     

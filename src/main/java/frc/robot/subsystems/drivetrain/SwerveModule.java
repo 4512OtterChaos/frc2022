@@ -1,4 +1,6 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.drivetrain;
+
+import static frc.robot.subsystems.drivetrain.SwerveConstants.*;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.DemandType;
@@ -19,8 +21,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import static frc.robot.constants.SwerveConstants.*;
-import frc.robot.constants.SwerveConstants.Module;
+import frc.robot.subsystems.drivetrain.SwerveConstants.Module;
 import frc.robot.util.TalonUtil;
 
 public class SwerveModule {
