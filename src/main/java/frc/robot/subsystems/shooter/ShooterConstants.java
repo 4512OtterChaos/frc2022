@@ -4,6 +4,7 @@ import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.TalonFXInvertType;
 import com.ctre.phoenix.motorcontrol.can.TalonFXConfiguration;
 import com.ctre.phoenix.sensors.SensorInitializationStrategy;
+import com.ctre.phoenix.sensors.SensorVelocityMeasPeriod;
 
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 
@@ -58,5 +59,7 @@ public final class ShooterConstants {
         );
         kFlywheelConfig.voltageCompSaturation = kVoltageSaturation;
         kFlywheelConfig.voltageMeasurementFilter = kVoltageMeasurementSamples;
+        kFlywheelConfig.velocityMeasurementPeriod = SensorVelocityMeasPeriod.Period_10Ms;
+        kFlywheelConfig.velocityMeasurementWindow = 8;
     }
 }
