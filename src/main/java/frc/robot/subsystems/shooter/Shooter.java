@@ -161,7 +161,7 @@ public class Shooter extends SubsystemBase {
 
     @Override
     public void simulationPeriodic(){
-        flywheelSim.setInputVoltage(rightMotor.getMotorOutputVoltage());
+        flywheelSim.setInputVoltage(rightMotorSim.getMotorOutputLeadVoltage());
         flywheelSim.update(0.02);
 
         double flywheelMotorVelocityNative = TalonUtil.radiansToVelocity(

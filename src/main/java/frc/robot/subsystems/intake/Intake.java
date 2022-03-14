@@ -70,7 +70,7 @@ public class Intake extends SubsystemBase {
 
     @Override
     public void simulationPeriodic(){
-        flywheelSim.setInputVoltage(motor.getMotorOutputVoltage());
+        flywheelSim.setInputVoltage(flywheelMotorSim.getMotorOutputLeadVoltage());
         flywheelSim.update(0.02);
 
         double flywheelMotorVelocityNative = TalonUtil.radiansToVelocity(

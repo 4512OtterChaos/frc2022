@@ -232,8 +232,8 @@ public class SwerveModule {
     private final CANCoderSimCollection steerEncoderSim;
 
     public void simulationPeriodic(){
-        driveWheelSim.setInputVoltage(driveMotor.getMotorOutputVoltage());
-        steeringSim.setInputVoltage(steerMotor.getMotorOutputVoltage());
+        driveWheelSim.setInputVoltage(driveMotorSim.getMotorOutputLeadVoltage());
+        steeringSim.setInputVoltage(steerMotorSim.getMotorOutputLeadVoltage());
         driveWheelSim.update(0.02);
         steeringSim.update(0.02);
 
