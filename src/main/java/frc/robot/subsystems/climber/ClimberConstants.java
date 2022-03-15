@@ -15,7 +15,7 @@ public class ClimberConstants {
     public static final double kD = 0;
     public static final TrapezoidProfile.Constraints kConstraints = new TrapezoidProfile.Constraints(55, 75);
 
-    public static final int kContinuousCurrentLimit = 40;
+    public static final int kContinuousCurrentLimit = 35;
     public static final int kPeakCurrentLimit = 50;
     public static final double kVoltageSaturation = 12;
     public static final int kCANTimeout = 100;

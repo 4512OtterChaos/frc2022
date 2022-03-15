@@ -23,12 +23,10 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.TalonUtil;
 
 public class Intake extends SubsystemBase {
-    /** Creates a new Intake. */
+
     private final WPI_TalonFX motor = new WPI_TalonFX(kMotorID);
     
-    // final DoubleSolenoid leftPiston = new DoubleSolenoid( PneumaticsModuleType.CTREPCM,kLeftPistonExtendPort, kLeftPistonRetractPort);
-   // private final DoubleSolenoid rightPiston = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, kRightPistonExtendPort, kRightPistonRetractPort);
-
+    //private final DoubleSolenoid pistons = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, kPistonExtendPort, kPistonRetractPort);
 
     public Intake() {
         setUpIntake(true);
@@ -45,17 +43,25 @@ public class Intake extends SubsystemBase {
     
     @Override
     public void periodic() {
-        // This method will be called once per scheduler run
+    }
+    public void stop(){
+        setVoltage(0);
+    }
+    public void setBrakeOn(boolean is){
+        motor.setNeutralMode(is ? NeutralMode.Brake : NeutralMode.Coast);
     }
     public void setVoltage(double voltage){
         motor.set(voltage / kVoltageSaturation);
     }
+    public void setVoltageIn(){setVoltage(kVoltageIn);}
+    public void setVoltageOut(){setVoltage(kVoltageOut);}
     /*
     public void setExtended(boolean extended){
         DoubleSolenoid.Value value = extended ? Value.kForward : Value.kReverse;
-        leftPiston.set(value);
-        rightPiston.set(value);
+        pistons.set(value);
     }
+    
+    public boolean getExtended(){return pistons.get() == Value.kForward;}
     */
 
 

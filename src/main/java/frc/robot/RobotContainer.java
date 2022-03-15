@@ -7,21 +7,24 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.auto.AutoOptions;
 import frc.robot.common.OCXboxController;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.climber.Climber;
 import frc.robot.subsystems.drivetrain.SwerveDrive;
+import frc.robot.subsystems.drivetrain.commands.TeleopDriveAngle;
+import frc.robot.subsystems.drivetrain.commands.TeleopDriveBasic;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
-import frc.robot.subsystems.shooter.ShotMap;
 import frc.robot.util.FieldUtil;
 
 public class RobotContainer {
@@ -30,13 +33,11 @@ public class RobotContainer {
     private final Indexer indexer = new Indexer();
     private final Intake intake = new Intake();
     private final Shooter shooter = new Shooter();
-    private final ShotMap shotMap = new ShotMap(shooter);
-    private final Superstructure superstructure = new Superstructure(climber, drivetrain, indexer, intake, shooter, shotMap);
+    private final Superstructure superstructure = new Superstructure(climber, drivetrain, indexer, intake, shooter);
 
     private final OCXboxController driver = new OCXboxController(0);
-    private boolean isFieldRelative = true;
 
-    private final AutoOptions autoOptions = new AutoOptions(climber, drivetrain, indexer, intake, shooter, shotMap, superstructure);
+    private final AutoOptions autoOptions = new AutoOptions(climber, drivetrain, indexer, intake, shooter, superstructure);
 
     public RobotContainer(){
 
@@ -57,38 +58,35 @@ public class RobotContainer {
 
     public void disable(){
         drivetrain.stop();
+        intake.stop();
+        indexer.stop();
         shooter.stop();
+        climber.stop();
     }
 
     public void setAllBrake(boolean is){
         drivetrain.setBrakeOn(is);
+        intake.setBrakeOn(is);
+        indexer.setBrakeOn(is);
     }
 
-    private void configureDriverBinds(OCXboxController driver){
+    private void configureDriverBinds(OCXboxController controller){
         // when no other command is using the drivetrain, we
-        // pass the joysticks for forward, strafe, and angular control
-        Command teleopDrive = new RunCommand(()->{
-            drivetrain.drive(
-                driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
-                driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
-                driver.getTurn() * drivetrain.getMaxAngularVelocityRadians(),
-                true,
-                isFieldRelative);
-        }, drivetrain).beforeStarting(()->driver.resetLimiters());
-        drivetrain.setDefaultCommand(teleopDrive);
+        // pass the joysticks for forward, strafe, and angular position control
+        drivetrain.setDefaultCommand(new TeleopDriveBasic(controller, drivetrain));
 
         // push-to-change driving "speed"
-        driver.rightBumper
-            .whenPressed(()->driver.setDriveSpeed(OCXboxController.kSpeedMax))
-            .whenReleased(()->driver.setDriveSpeed(OCXboxController.kSpeedDefault));
+        controller.rightBumper
+            .whenPressed(()->controller.setDriveSpeed(OCXboxController.kSpeedMax))
+            .whenReleased(()->controller.setDriveSpeed(OCXboxController.kSpeedDefault));
 
-        // change from field-relative to robot-relative control
-        driver.backButton.whenPressed(()->{
-            isFieldRelative = !isFieldRelative;
+        // toggle between field-relative and robot-relative control
+        controller.backButton.whenPressed(()->{
+            drivetrain.setIsFieldRelative(!drivetrain.getIsFieldRelative());
         });
 
         // reset the robot heading to 0
-        driver.startButton.whenPressed(()->{
+        controller.startButton.whenPressed(()->{
             drivetrain.resetOdometry(
                 new Pose2d(
                     drivetrain.getPose().getTranslation(),
@@ -98,7 +96,7 @@ public class RobotContainer {
         });
 
         // lock the modules in a "X" alignment
-        driver.xButton.whileHeld(()->{
+        controller.xButton.whileHeld(()->{
             SwerveModuleState[] states = new SwerveModuleState[]{
                 new SwerveModuleState(0, Rotation2d.fromDegrees(-135)),
                 new SwerveModuleState(0, Rotation2d.fromDegrees(135)),
@@ -107,75 +105,80 @@ public class RobotContainer {
             };
             drivetrain.setModuleStates(states, false, true);
         }, drivetrain);
+
         //Climber down
-        driver.povDownButton.whenPressed(()-> climber.setVolts(-8), climber)
-        .whenReleased(()->climber.setVolts(0), climber);
-        
+        controller.povDownButton
+            .whenPressed(()->climber.setVolts(-8), climber)
+            .whenReleased(()->climber.setVolts(0), climber);
         //Climber up
-        driver.povUpButton.whenPressed(()-> climber.setVolts(8), climber)
-        .whenReleased(()->climber.setVolts(0), climber);
+        controller.povUpButton
+            .whenPressed(()->climber.setVolts(8), climber)
+            .whenReleased(()->climber.setVolts(0), climber);
+
         //Clear intake and indexer
-        driver.leftStick
+        controller.leftStick
             .whenPressed(()->{
-                intake.setVoltage(-4);
-                indexer.setVoltage(-1);
+                intake.setVoltageOut();
+                indexer.setVoltageOut();
             }, intake, indexer)
             .whenReleased(()->{
-                intake.setVoltage(0);
-                indexer.setVoltage(0);
+                intake.stop();
+                indexer.stop();
             }, intake, indexer);
         
-        //
-        driver.rightTriggerButton
-            .whenPressed(superstructure.intakeIndexBalls(
-                (isIndexing)->{
-                    if(isIndexing){
-                        driver.setRumble(RumbleType.kRightRumble, 0.5);
-                    }
-                    else{
-                        driver.setRumble(RumbleType.kRightRumble, 0);
-                    }
-                }
-            ))
-            .whenReleased(()->{
-                indexer.setVoltage(0);
-                intake.setVoltage(0);
-            }, indexer, intake);
+        // intake and automatically index cargo, rumble based on status
+        controller.rightTriggerButton
+            .whenPressed(
+                superstructure.intakeIndexCargo()
+                .deadlineWith(
+                    new RunCommand(()->{
+                        if(indexer.getTopSensed()){
+                            // pulsing rumble when full
+                            double rumble = Math.sin(Timer.getFPGATimestamp()*20);
+                            rumble = rumble < 0 ? 0 : 0.5;
+                            controller.rumble(rumble);
+                        }
+                        else if(indexer.shouldIndex()) controller.rumble(0.25);
+                        else controller.rumble(0);
+                    })
+                )
+            )
+            .whenReleased(
+                superstructure.stopIntake()
+                .alongWith(
+                    superstructure.stopIndexer(),
+                    new InstantCommand(()->controller.rumble(0))
+                )
+            );
         
-        /*driver.rightTriggerButton
-            .whenPressed(()->{
-                intake.setVoltage(4);
-                indexer.setVoltage(4);
-            }, intake, indexer)
-            .whenReleased(()->{
-                intake.setVoltage(0);
-                indexer.setVoltage(0);
-            }, intake, indexer);
-            */
-        //driver.xButton.whenPressed(()->intake.setExtended(false));
-        driver.leftBumper.whenPressed(superstructure.fenderShoot())
+        //controller.bButton.whenPressed(()->intake.setExtended(false));
+
+        controller.leftBumper.whenPressed(superstructure.fenderShootHigh())
         .whenReleased(()->{
-            shooter.setRPM(0);
-            indexer.setVoltage(0);
+            shooter.stop();
+            indexer.stop();
         }, shooter, indexer);
 
-        driver.aButton.whenPressed(superstructure.fenderShoot2())
+        controller.aButton.whenPressed(superstructure.fenderShootLow())
         .whenReleased(()->{
-            shooter.setRPM(0);
-            indexer.setVoltage(0);
+            shooter.stop();
+            indexer.stop();
         }, shooter, indexer);
 
-        driver.leftTriggerButton.whenPressed(
+        controller.leftTriggerButton.whenPressed(
             superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(
                 ()->driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
                 ()->driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
                 true
-            )
+            ).beforeStarting(()->controller.resetLimiters())
         )
-        .whenReleased(()->{
-            shooter.setRPM(0);
-            indexer.setVoltage(0);
-        }, drivetrain, shooter, indexer);
+        .whenReleased(
+            superstructure.stopDrive()
+            .alongWith(
+                superstructure.stopIndexer(),
+                superstructure.stopShooter()
+            )
+        );
 
         // estimate hood angle continuously before shooting
         shooter.setDefaultCommand(new RunCommand(()->{
@@ -191,24 +194,16 @@ public class RobotContainer {
         }, shooter));
     }
     // Manual shot tuning
-    private void configureTestBinds(OCXboxController driver){
-        Command teleopDrive = new RunCommand(()->{
-            drivetrain.drive(
-                driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
-                driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
-                driver.getTurn() * drivetrain.getMaxAngularVelocityRadians(),
-                true,
-                isFieldRelative);
-        }, drivetrain).beforeStarting(()->driver.resetLimiters());
-        drivetrain.setDefaultCommand(teleopDrive);
+    private void configureTestBinds(OCXboxController controller){
+        drivetrain.setDefaultCommand(new TeleopDriveBasic(controller, drivetrain));
 
-        // change from field-relative to robot-relative control
-        driver.backButton.whenPressed(()->{
-            isFieldRelative = !isFieldRelative;
+        // toggle between field-relative and robot-relative control
+        controller.backButton.whenPressed(()->{
+            drivetrain.setIsFieldRelative(!drivetrain.getIsFieldRelative());
         });
 
         // reset the robot heading to 0
-        driver.startButton.whenPressed(()->{
+        controller.startButton.whenPressed(()->{
             drivetrain.resetOdometry(
                 new Pose2d(
                     drivetrain.getPose().getTranslation(),
@@ -216,37 +211,59 @@ public class RobotContainer {
                 )
             );
         });
-        //Clear intake and indexer 
-        driver.leftStick
+        //Clear intake and indexer
+        controller.leftStick
             .whenPressed(()->{
-                intake.setVoltage(-8);
-                indexer.setVoltage(-8);
+                intake.setVoltageOut();
+                indexer.setVoltageOut();
             }, intake, indexer)
             .whenReleased(()->{
-                intake.setVoltage(0);
-                indexer.setVoltage(0);
+                intake.stop();
+                indexer.stop();
             }, intake, indexer);
 
         shooter.setDefaultCommand(new RunCommand(()->{
             double hoodDelta = 0;
-            if(driver.povUpButton.get()) hoodDelta += 1;
-            if(driver.povDownButton.get()) hoodDelta -= 1;
+            if(controller.povRightButton.get()) hoodDelta += 1;
+            if(controller.povLeftButton.get()) hoodDelta -= 1;
             shooter.setHood(shooter.getState().hoodMM + hoodDelta);
 
-            shooter.setRPM(driver.getLeftTriggerAxis() * ShooterConstants.kMaxRPM);
-            //shooter.setShooterVoltage(driver.getLeftTriggerAxis()*12);
+            double rpmDelta = 0;
+            if(controller.povUpButton.get()) rpmDelta += 100;
+            if(controller.povDownButton.get()) rpmDelta -= 100;
+            shooter.setRPM(shooter.getState().rpm + rpmDelta);
+
+            //shooter.setShooterVoltage(controller.getLeftTriggerAxis()*12);
         }, shooter));
 
-        driver.rightTriggerButton
-            .whenPressed(superstructure.intakeIndexBalls())
-            .whenReleased(()->{
-                indexer.setVoltage(0);
-                intake.setVoltage(0);
-            }, indexer, intake);
+        // intake and automatically index cargo, rumble based on status
+        controller.rightTriggerButton
+            .whenPressed(
+                superstructure.intakeIndexCargo()
+                .deadlineWith(
+                    new RunCommand(()->{
+                        if(indexer.getTopSensed()){
+                            // pulsing rumble when full
+                            double rumble = Math.sin(Timer.getFPGATimestamp()*20);
+                            rumble = rumble < 0 ? 0 : 0.5;
+                            controller.rumble(rumble);
+                        }
+                        else if(indexer.shouldIndex()) controller.rumble(0.25);
+                        else controller.rumble(0);
+                    })
+                )
+            )
+            .whenReleased(
+                superstructure.stopIntake()
+                .alongWith(
+                    superstructure.stopIndexer(),
+                    new InstantCommand(()->controller.rumble(0))
+                )
+            );
 
-        driver.rightBumper
-            .whenPressed(()->indexer.setVoltage(7), indexer)
-            .whenReleased(()->indexer.setVoltage(0), indexer);
+        controller.leftTriggerButton
+            .whenPressed(()->indexer.setVoltageFeed(), indexer)
+            .whenReleased(()->indexer.stop(), indexer);
     }
 
     public double getCurrentDraw(){
@@ -260,7 +277,10 @@ public class RobotContainer {
 
     public void log(){
         Translation2d driveTranslation = drivetrain.getPose().getTranslation();
-        SmartDashboard.putNumber("Shooter/DistanceInches", Units.metersToInches(driveTranslation.getDistance(FieldUtil.kFieldCenter)));
+        SmartDashboard.putNumber(
+            "Shooter/DistanceInches",
+            Units.metersToInches(driveTranslation.getDistance(FieldUtil.kFieldCenter))
+        );
         drivetrain.log();
         indexer.log();
         shooter.log();

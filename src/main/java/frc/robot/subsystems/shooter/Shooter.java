@@ -117,7 +117,7 @@ public class Shooter extends SubsystemBase {
      * Represents a state of flywheel rpm and hood angle achievable by the shooter.
      * Shooter states can be transitioned from by using {@link #interpolate(State, double)}.
      */
-    public class State implements Interpolatable<Shooter.State>{
+    public static class State implements Interpolatable<Shooter.State>{
         public final double rpm;
         public final double hoodMM;
         

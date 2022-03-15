@@ -4,8 +4,6 @@ import static frc.robot.auto.AutoConstants.*;
 
 import com.ctre.phoenix.sensors.BasePigeonSimCollection;
 import com.ctre.phoenix.sensors.WPI_Pigeon2;
-import com.ctre.phoenix.sensors.WPI_PigeonIMU;
-import com.ctre.phoenix.sensors.WPI_Pigeon2;
 
 import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.controller.PIDController;
@@ -26,13 +24,24 @@ import frc.robot.auto.AutoConstants;
 
 public class SwerveDrive extends SubsystemBase {
 
-    private final SwerveModule[] swerveMods;
-    private final WPI_Pigeon2 gyro;
-    private final BasePigeonSimCollection gyroSim; // simulate pigeon
-
-    private final SwerveDriveKinematics kinematics;
-    private final SwerveDriveOdometry odometry;
+    // construct our modules in order with their specific constants
+    private final SwerveModule[] swerveMods = new SwerveModule[]{
+        new SwerveModule(SwerveConstants.Module.FL),
+        new SwerveModule(SwerveConstants.Module.FR),
+        new SwerveModule(SwerveConstants.Module.BL),
+        new SwerveModule(SwerveConstants.Module.BR)
+    };
+    private final WPI_Pigeon2 gyro = new WPI_Pigeon2(SwerveConstants.kPigeonID);
+    
+    private final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
+        swerveMods[0].getModuleConstants().centerOffset,
+        swerveMods[1].getModuleConstants().centerOffset,
+        swerveMods[2].getModuleConstants().centerOffset,
+        swerveMods[3].getModuleConstants().centerOffset
+    );
+    private final SwerveDriveOdometry odometry = new SwerveDriveOdometry(kinematics, new Rotation2d());
     private ChassisSpeeds targetChassisSpeeds = new ChassisSpeeds();
+    private boolean isFieldRelative = true;
 
     // path controller and its dimension-specific controllers
     // i.e 1 meter error in the x direction = kP meters per second x velocity added
@@ -49,26 +58,11 @@ public class SwerveDrive extends SubsystemBase {
     private final Field2d field2d = new Field2d();
     
     public SwerveDrive() {
-        // construct our modules in order with their specific constants
-        swerveMods = new SwerveModule[]{
-            new SwerveModule(SwerveConstants.Module.FL),
-            new SwerveModule(SwerveConstants.Module.FR),
-            new SwerveModule(SwerveConstants.Module.BL),
-            new SwerveModule(SwerveConstants.Module.BR)
-        };
-
-        gyro = new WPI_Pigeon2(SwerveConstants.kPigeon2ID);
+        
         gyro.configAllSettings(SwerveConstants.kPigeon2Config);
-        gyroSim = gyro.getSimCollection();
+        
         zeroGyro();
-
-        kinematics = new SwerveDriveKinematics(
-            swerveMods[0].getModuleConstants().centerOffset,
-            swerveMods[1].getModuleConstants().centerOffset,
-            swerveMods[2].getModuleConstants().centerOffset,
-            swerveMods[3].getModuleConstants().centerOffset
-        );
-        odometry = new SwerveDriveOdometry(kinematics, getGyroYaw());
+        
         SmartDashboard.putData("Field", field2d);
 
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
@@ -89,19 +83,19 @@ public class SwerveDrive extends SubsystemBase {
     }
 
     /**
-     * Basic teleop drive control; percentages representing vx, vy, and omega
-     * are converted to chassis speeds for the robot to follow
-     * @param vxMeters vx (forward)
-     * @param vyMeters vy (strafe)
-     * @param omegaRadians omega (rotation CCW+)
-     * @param fieldRelative If is field-relative control
+     * Basic teleop drive control; ChassisSpeeds values representing vx, vy, and omega
+     * are converted to individual module states for the robot to follow
+     * @param vxMeters x velocity (forward)
+     * @param vyMeters y velocity (strafe)
+     * @param omegaRadians angular velocity (rotation CCW+)
+     * @param openLoop If swerve modules should not use velocity PID
      */
-    public void drive(double vxMeters, double vyMeters, double omegaRadians, boolean openLoop, boolean fieldRelative){
+    public void drive(double vxMeters, double vyMeters, double omegaRadians, boolean openLoop){
         double vx = vxMeters;
         double vy = vyMeters;
         double omega = omegaRadians;
         ChassisSpeeds targetChassisSpeeds;
-        if(fieldRelative){
+        if(isFieldRelative){
             targetChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, omega, getHeading());
         }
         else{
@@ -109,7 +103,40 @@ public class SwerveDrive extends SubsystemBase {
         }
         setChassisSpeeds(targetChassisSpeeds, openLoop, false);
     }
+    /**
+     * Drive control using angle position (theta) instead of velocity (omega).
+     * The {@link #thetaController theta PID controller} calculates an angular velocity in order
+     * to reach the target angle, making this method similar to autonomous path following without
+     * x/y position controllers. This method assumes field-oriented control and is not affected
+     * by the value of {@link #isFieldRelative}.
+     * @param vxMeters x velocity (forward)
+     * @param vyMeters y velocity (strafe)
+     * @param targetRotation target angular position
+     * @param openLoop If swerve modules should not use velocity PID
+     * @return If the drivetrain rotation is within tolerance of the target rotation
+     */
+    public boolean drive(double vxMeters, double vyMeters, Rotation2d targetRotation, boolean openLoop){
+        // rotation speed
+        double rotationRadians = getPose().getRotation().getRadians();
+        double pidOutput = thetaController.calculate(rotationRadians, targetRotation.getRadians());
 
+        // + translation speed
+        ChassisSpeeds targetChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+            vxMeters,
+            vyMeters,
+            pidOutput,
+            getHeading()
+        );
+
+        setChassisSpeeds(targetChassisSpeeds, openLoop, false);
+        return thetaController.atGoal();
+    }
+    /**
+     * Drive control intended for path following utilizing the {@link #pathController path controller}.
+     * This method always uses closed-loop control on the modules.
+     * @param targetState Trajectory state containing target translation and velocities
+     * @param targetRotation Target rotation independent of trajectory motion
+     */
     public void drive(Trajectory.State targetState, Rotation2d targetRotation){
         // determine ChassisSpeeds from path state and positional feedback control from HolonomicDriveController
         ChassisSpeeds targetChassisSpeeds = pathController.calculate(
@@ -119,26 +146,6 @@ public class SwerveDrive extends SubsystemBase {
         );
         // command robot to reach the target ChassisSpeeds
         setChassisSpeeds(targetChassisSpeeds, false, false);
-    }
-    public boolean driveRotate(Rotation2d targetRotation, double vxMeters, double vyMeters, boolean fieldRelative){
-        // rotation speed
-        double rotationRadians = getPose().getRotation().getRadians();
-        double pidOutput = thetaController.calculate(rotationRadians, targetRotation.getRadians());
-
-        // + translation speed
-        ChassisSpeeds targetChassisSpeeds;
-        if(fieldRelative){
-            targetChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(vxMeters, vyMeters, pidOutput, getHeading());
-        }
-        else{
-            targetChassisSpeeds = new ChassisSpeeds(vxMeters,vyMeters,pidOutput);
-        }
-
-        setChassisSpeeds(targetChassisSpeeds, false, true);
-        return thetaController.atGoal();
-    }
-    public boolean driveRotate(Rotation2d targetRotation){
-        return driveRotate(targetRotation, 0, 0, false);
     }
 
     /**
@@ -161,8 +168,13 @@ public class SwerveDrive extends SubsystemBase {
         this.targetChassisSpeeds = targetChassisSpeeds;
     }
     public void stop(){
-        drive(0, 0, 0, true, false);
+        drive(0, 0, 0, true);
     }
+
+    /**
+     * Changes whether drive methods use field or robot-oriented control.
+     */
+    public void setIsFieldRelative(boolean is) {isFieldRelative = is;}
 
     public void setBrakeOn(boolean is){
         for(SwerveModule mod : swerveMods){
@@ -183,12 +195,20 @@ public class SwerveDrive extends SubsystemBase {
         thetaController.reset(getHeading().getRadians(), getChassisSpeeds().omegaRadiansPerSecond);
     }
 
-    public Pose2d getPose(){
+    public boolean getIsFieldRelative() {return isFieldRelative;}
+
+    public Pose2d getPose() {
         return odometry.getPoseMeters();
     }
+    /**
+     * Swerve drive rotation on the field reported by odometry.
+     */
     public Rotation2d getHeading(){
         return odometry.getPoseMeters().getRotation();
     }
+    /**
+     * Raw gyro yaw (this may not match the field heading!).
+     */
     public Rotation2d getGyroYaw(){
         return gyro.getRotation2d();
     }
@@ -254,6 +274,11 @@ public class SwerveDrive extends SubsystemBase {
     public void logTrajectory(Trajectory trajectory){
         field2d.getObject("Trajectory").setTrajectory(trajectory);
     }
+
+
+
+    //----- Simulation
+    private final BasePigeonSimCollection gyroSim = gyro.getSimCollection(); // simulate pigeon
 
     @Override
     public void simulationPeriodic(){

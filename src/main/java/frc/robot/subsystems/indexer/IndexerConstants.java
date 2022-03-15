@@ -1,11 +1,6 @@
 package frc.robot.subsystems.indexer;
 
-import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
-import com.ctre.phoenix.motorcontrol.can.TalonFXConfiguration;
-import com.ctre.phoenix.sensors.SensorInitializationStrategy;
-
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 
 public class IndexerConstants {
     public static final int kMotorID = 10;
@@ -13,6 +8,10 @@ public class IndexerConstants {
     public static final int kTopSensorID = 1;
     
     public static final boolean kMotorInverted = true;
+
+    public static final double kVoltageIn = 4; // intake/index
+    public static final double kVoltageFeed = 8; // feed shooter
+    public static final double kVoltageOut = 8;
 
     // Feedforward loaded with cargo (simulation rn)
     public static final SimpleMotorFeedforward kFF = new SimpleMotorFeedforward(
@@ -22,7 +21,7 @@ public class IndexerConstants {
     );
     
     // Current limits
-    public static final int kContinuousCurrentLimit = 30;
+    public static final int kContinuousCurrentLimit = 35;
     public static final int kPeakCurrentLimit = 40;
     public static final double kPeakCurrentDuration = 0.1;
     // Voltage compensation`

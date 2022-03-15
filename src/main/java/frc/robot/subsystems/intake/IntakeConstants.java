@@ -8,12 +8,13 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 
 public class IntakeConstants {
     public static final int kMotorID = 11;
-    public static final int kLeftPistonExtendPort = 0;
-    public static final int kRightPistonExtendPort = 1;
-    public static final int kLeftPistonRetractPort = 2;
-    public static final int kRightPistonRetractPort = 3;
+    public static final int kPistonExtendPort = 0;
+    public static final int kPistonRetractPort = 1;
 
     public static final boolean kMotorInverted = true;
+
+    public static final double kVoltageIn = 4;
+    public static final double kVoltageOut = 6;
 
     // Feedforward (simulation rn)
     public static final SimpleMotorFeedforward kFF = new SimpleMotorFeedforward(

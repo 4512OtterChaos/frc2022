@@ -5,7 +5,6 @@ import com.ctre.phoenix.motorcontrol.can.TalonFXConfiguration;
 import com.ctre.phoenix.sensors.AbsoluteSensorRange;
 import com.ctre.phoenix.sensors.CANCoderConfiguration;
 import com.ctre.phoenix.sensors.Pigeon2Configuration;
-import com.ctre.phoenix.sensors.PigeonIMUConfiguration;
 import com.ctre.phoenix.sensors.SensorInitializationStrategy;
 import com.ctre.phoenix.sensors.SensorVelocityMeasPeriod;
 
@@ -18,7 +17,7 @@ import frc.robot.util.TalonUtil;
 public class SwerveConstants {
 
     private static final boolean isReal = RobotBase.isReal();
-    public static final int kPigeon2ID = 0;
+    public static final int kPigeonID = 0;
 
     // Inversions
     public static final boolean kInvertGyro = false;
@@ -28,9 +27,10 @@ public class SwerveConstants {
     // Physical properties
     public static final double kTrackWidth = Units.inchesToMeters(18.5);
     public static final double kTrackLength = Units.inchesToMeters(18.5);
+    public static final double kRobotWidth = Units.inchesToMeters(25 + 3.25*2);
     
-    public static final double kMaxLinearSpeed = Units.feetToMeters(14);
-    public static final double kMaxAngularSpeed = Units.degreesToRadians(720);
+    public static final double kMaxLinearSpeed = Units.feetToMeters(15.5);
+    public static final double kMaxAngularSpeed = Units.rotationsToRadians(2);
     public static final double kWheelDiameter = Units.inchesToMeters(4);
     public static final double kWheelCircumference = kWheelDiameter*Math.PI;
     public static final double kDriveGearRatio = 6.12; // 6.12:1 L3 ratio

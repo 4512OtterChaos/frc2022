@@ -68,6 +68,7 @@ public class Climber extends SubsystemBase {
         rightMotor.setVoltage(rightAdjustedVoltage);
         leftMotor.setVoltage(leftAdjustedVoltage);
     }
+    public void stop(){setVolts(0);}
     public void setVolts(double voltage){
         isManual = true;
         targetVolts = voltage;
