@@ -37,9 +37,10 @@ public class AutoOptions {
         autoOptions.setDefaultOption("Nothing",
             new InstantCommand(()->drivetrain.stop(), drivetrain)
         );
+        
         autoOptions.addOption("TripleRight", 
-            superstructure.fenderShoot()
-            .withTimeout(5)
+            new WaitCommand(2.5)
+            .deadlineWith(superstructure.fenderShoot())
             .andThen(()->{
                 shooter.stop();
                 indexer.setVoltage(0);
@@ -55,8 +56,7 @@ public class AutoOptions {
                 ) 
                 .deadlineWith(superstructure.intakeIndexBalls())
             )
-            .andThen(superstructure.fenderShoot())
-            .withTimeout(5)
+            .andThen(superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(3))
             .andThen(()->{
                 shooter.stop();
                 indexer.setVoltage(0);
@@ -64,13 +64,11 @@ public class AutoOptions {
                 indexer, shooter
             )
             .andThen(()->drivetrain.stop(), drivetrain)
-            .andThen(superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(3))
         );
+
         autoOptions.addOption("FenderTripleRight", 
-            superstructure.fenderShoot()
-            .alongWith(
-                new WaitCommand(4)
-            )
+            new WaitCommand(2)
+            .deadlineWith(superstructure.fenderShoot())
             .andThen(()->{
                 shooter.stop();
                 indexer.setVoltage(0);
@@ -80,17 +78,16 @@ public class AutoOptions {
             .andThen(
                 autoFollowTrajectory(
                     drivetrain, 
-                    "TripleRight1", 
+                    "TripleRightFender1", 
                     AutoConstants.kMediumSpeedConfig,
                     true
                 ) 
                 .deadlineWith(superstructure.intakeIndexBalls())
                 .andThen(()->drivetrain.stop(), drivetrain)
             )
-            .andThen(superstructure.fenderShoot()
-                .alongWith(
-                new WaitCommand(4)
-                )
+            .andThen(
+                new WaitCommand(3)
+                .deadlineWith(superstructure.fenderShoot())
             )
             .andThen(()->{
                 shooter.stop();
@@ -101,9 +98,9 @@ public class AutoOptions {
             
         );
         
-        autoOptions.addOption("DoubleLeft", 
-            superstructure.fenderShoot()
-            .withTimeout(5)
+        autoOptions.addOption("DoubleLeft",
+            new WaitCommand(2.5)
+            .deadlineWith(superstructure.fenderShoot())
             .andThen(()->{
                 shooter.stop();
                 indexer.setVoltage(0);
@@ -124,11 +121,9 @@ public class AutoOptions {
             
 
         );
-        autoOptions.addOption("FenderDoubleLeft", 
-            superstructure.fenderShoot()
-            .alongWith(
-                new WaitCommand(4)
-            )
+        autoOptions.addOption("FenderDoubleLeft",
+            new WaitCommand(2.5)
+            .deadlineWith(superstructure.fenderShoot())
             .andThen(()->{
                 shooter.stop();
                 indexer.setVoltage(0);
@@ -152,10 +147,9 @@ public class AutoOptions {
                 )
                 .andThen(()->drivetrain.stop(), drivetrain)
             )
-            .andThen(superstructure.fenderShoot()
-                .alongWith(
-                    new WaitCommand(4)
-                )
+            .andThen(
+                new WaitCommand(3)
+                .deadlineWith(superstructure.fenderShoot())
                 .andThen(()->{
                     shooter.stop();
                     indexer.setVoltage(0);
@@ -165,9 +159,9 @@ public class AutoOptions {
             )
            
         );
-        autoOptions.addOption("QuintupleRight", 
-            superstructure.fenderShoot()
-            .withTimeout(4)
+        autoOptions.addOption("QuintupleRight",
+            new WaitCommand(2)
+            .deadlineWith(superstructure.fenderShoot())
             .andThen(()->{
                 shooter.stop();
                 indexer.setVoltage(0);
@@ -185,7 +179,7 @@ public class AutoOptions {
             )
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(
-                superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(3)
+                superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(2.5)
             )
             .andThen(
                 autoFollowTrajectory(
@@ -198,7 +192,8 @@ public class AutoOptions {
             )
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(
-                new WaitCommand(2)
+                new WaitCommand(1)
+                .deadlineWith(superstructure.intakeIndexBalls())
             )
             .andThen(
                 autoFollowTrajectory(
@@ -216,15 +211,15 @@ public class AutoOptions {
         );
 
         //Don't use, no odometry; only as last resort 
-        autoOptions.addOption("TaxiLastResort", 
+        autoOptions.addOption("TaxiLastResort",
             new RunCommand(()->drivetrain.drive(0.4, 0, 0, false, false), drivetrain)
             .withTimeout(3)
             .andThen(()->drivetrain.stop(), drivetrain)
         );
 
-        autoOptions.addOption("ShootThenTaxiLastResort", 
-            superstructure.fenderShoot()
-            .withTimeout(5)
+        autoOptions.addOption("ShootThenTaxiLastResort",
+            new WaitCommand(2)
+            .deadlineWith(superstructure.fenderShoot())
             .andThen(()->{
                 shooter.stop();
                 indexer.setVoltage(0);
@@ -232,10 +227,8 @@ public class AutoOptions {
                 indexer, shooter
             )
             .andThen(
-                new RunCommand(()->drivetrain.drive(0.6, 0, 0, false, false), drivetrain)
-                .andThen(
-                    new WaitCommand(2)
-                )
+                new WaitCommand(2)
+                .deadlineWith(new RunCommand(()->drivetrain.drive(0.6, 0, 0, false, false), drivetrain))
             )
             .andThen(()->drivetrain.stop(), drivetrain)
         );
