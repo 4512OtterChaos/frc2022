@@ -43,24 +43,15 @@ public class AutoOptions {
                 .deadlineWith(superstructure.intakeIndexCargo())
             )
             .andThen(superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(3))
-            .andThen(()->{
-                shooter.stop();
-                indexer.stop();
-            },
-                indexer, shooter
-            )
-            .andThen(()->drivetrain.stop(), drivetrain)
+            .andThen(superstructure.stop())
         );
 
         autoOptions.addOption("FenderTripleRight", 
-            new WaitCommand(2)
-            .deadlineWith(superstructure.fenderShootHigh())
+            superstructure.fenderShootHigh(2)
             .andThen(()->{
                 shooter.stop();
-                indexer.setVoltage(0);
-            },
-                indexer, shooter
-            )
+                indexer.stop();
+            }, indexer, shooter)
             .andThen(
                 autoFollowTrajectory(
                     drivetrain, 
@@ -72,27 +63,17 @@ public class AutoOptions {
                 .andThen(()->drivetrain.stop(), drivetrain)
             )
             .andThen(
-                new WaitCommand(3)
-                .deadlineWith(superstructure.fenderShootHigh())
+                superstructure.fenderShootHigh(3)
             )
-            .andThen(()->{
-                shooter.stop();
-                indexer.setVoltage(0);
-            },
-                indexer, shooter
-            )
-            
+            .andThen(superstructure.stop())
         );
         
         autoOptions.addOption("DoubleLeft",
-            new WaitCommand(2.5)
-            .deadlineWith(superstructure.fenderShootHigh())
+            superstructure.fenderShootHigh(2.5)
             .andThen(()->{
                 shooter.stop();
-                indexer.setVoltage(0);
-            },
-                indexer, shooter
-            )
+                indexer.stop();
+            }, indexer, shooter)
             .andThen(
                 autoFollowTrajectory(
                     drivetrain, 
@@ -101,21 +82,17 @@ public class AutoOptions {
                     true
                 ) 
                 .deadlineWith(superstructure.intakeIndexCargo())
+                .andThen(()->drivetrain.stop(), drivetrain)
             )
-            .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(3))
-            
-
+            .andThen(superstructure.stop())
         );
         autoOptions.addOption("FenderDoubleLeft",
-            new WaitCommand(2.5)
-            .deadlineWith(superstructure.fenderShootHigh())
+            superstructure.fenderShootHigh(2.5)
             .andThen(()->{
                 shooter.stop();
-                indexer.setVoltage(0);
-            },
-                indexer, shooter
-            )
+                indexer.stop();
+            }, indexer, shooter)
             .andThen(
                 autoFollowTrajectory(
                     drivetrain, 
@@ -134,26 +111,17 @@ public class AutoOptions {
                 .andThen(()->drivetrain.stop(), drivetrain)
             )
             .andThen(
-                new WaitCommand(3)
-                .deadlineWith(superstructure.fenderShootHigh())
-                .andThen(()->{
-                    shooter.stop();
-                    indexer.setVoltage(0);
-                },
-                indexer, shooter
-                )
+                superstructure.fenderShootHigh(3)
             )
+            .andThen(superstructure.stop())
            
         );
         autoOptions.addOption("QuintupleRight",
-            new WaitCommand(2)
-            .deadlineWith(superstructure.fenderShootHigh())
+            superstructure.fenderShootHigh(1.5)
             .andThen(()->{
                 shooter.stop();
-                indexer.setVoltage(0);
-            },
-                indexer, shooter
-            )
+                indexer.stop();
+            }, indexer, shooter)
             .andThen(
                 autoFollowTrajectory(
                     drivetrain, 
@@ -178,7 +146,7 @@ public class AutoOptions {
             )
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(
-                new WaitCommand(1)
+                new WaitCommand(0.75)
                 .deadlineWith(superstructure.intakeIndexCargo())
             )
             .andThen(
@@ -193,6 +161,7 @@ public class AutoOptions {
             .andThen(
                 superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(3)
             )
+            .andThen(superstructure.stop())
 
         );
 
@@ -204,14 +173,11 @@ public class AutoOptions {
         );
 
         autoOptions.addOption("ShootThenTaxiLastResort",
-            new WaitCommand(2)
-            .deadlineWith(superstructure.fenderShootHigh())
+            superstructure.fenderShootHigh(2)
             .andThen(()->{
                 shooter.stop();
-                indexer.setVoltage(0);
-            },
-                indexer, shooter
-            )
+                indexer.stop();
+            }, indexer, shooter)
             .andThen(
                 new WaitCommand(2)
                 .deadlineWith(new RunCommand(()->drivetrain.drive(0.6, 0, 0, false), drivetrain))

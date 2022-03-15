@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -12,6 +13,7 @@ import edu.wpi.first.util.function.BooleanConsumer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
@@ -103,16 +105,6 @@ public class Superstructure extends SubsystemBase {
             indexer
         );
     }
-
-    /**
-     * Perpetually intakes and indexes cargo automatically.
-     * This command must be interrupted and will stop intaking/indexing once interrupted.
-     */
-    public Command intakeIndexCargo(){
-        return intakeCargo()
-            .alongWith(indexCargo());
-    }
-
     /**
      * Perpetually reverses intake/indexer to dump any cargo inside the robot.
      * This command must be interrupted and will stop intaking/indexing once interrupted.
@@ -129,61 +121,97 @@ public class Superstructure extends SubsystemBase {
             }, intake, indexer
         );
     }
+    /**
+     * Perpetually feeds cargo to the shooter based on the supplied condition.
+     * This command must be interrupted and will stop indexing once interrupted.
+     * @param condition The condition of whether to feed cargo or not
+     */
+    public Command feedCargo(BooleanSupplier condition){
+        return new FunctionalCommand(
+            ()->{},
+            ()->{
+                if(condition.getAsBoolean()){
+                    indexer.setVoltageFeed();
+                }
+                else{
+                    indexer.stop();
+                }
+            },
+            (interrupted)->{indexer.stop();},
+            ()->false, indexer
+        );
+    }
+    /**
+     * Perpetually feeds cargo to the shooter.
+     * This command must be interrupted and will stop indexing once interrupted.
+     */
+    public Command feedCargo(){
+        return feedCargo(()->true);
+    }
 
     /**
-     * Set the target shooter state and finish when the shooter is within tolerance.
-     * Does NOT stop the shooter when the state is achieved.
+     * Perpetually intakes and indexes cargo automatically.
+     * This command must be interrupted and will stop intaking/indexing once interrupted.
+     */
+    public Command intakeIndexCargo(){
+        return intakeCargo()
+            .alongWith(indexCargo());
+    }
+
+    /**
+     * Set the target shooter state perpetually.
+     * Stops the shooter when interrupted.
      */
     public Command setShooterState(Shooter.State state){
+        return new StartEndCommand(
+            ()->shooter.setState(state),
+            ()->shooter.stop(),
+            shooter
+        );
+    }
+    /**
+     * Set the target shooter state and finishes when the shooter is within tolerance or
+     * timeout seconds have passed.
+     * Does NOT stop the shooter when the state is achieved.
+     */
+    public Command setShooterState(Shooter.State state, double timeout){
         return new InstantCommand(()->shooter.setState(state), shooter)
         .perpetually()
         .withInterrupt(()->shooter.getState().withinTolerance(state))
-        .withTimeout(2.5);
+        .withTimeout(timeout);
     }
 
     /**
-     * Shoot in the high goal from against the fender.
-     * Does NOT stop the shooter/indexer when finished, the interrupting
-     * command must do this.
+     * Shoot in the high goal from against the fender perpetually.
+     * This command must be interrupted and will stop shooting/indexing once interrupted.
      */
     public Command fenderShootHigh(){
-        return setShooterState(ShotMap.find(0)) // closest state
-        .andThen(()->indexer.setVoltageFeed(), indexer);
+        return setShooterState(ShotMap.find(0)) // closest state (fender)
+        .alongWith(feedCargo(shooter::withinTolerance));
     }
     /**
      * Shoot in the high goal from against the fender for timeout seconds
-     * and then stop the indexer/shooter. This command will not stop the 
-     * indexer/shooter if interrupted.
+     * and then stop the indexer/shooter.
      */
     public Command fenderShootHigh(double timeout){
         return new WaitCommand(timeout)
-            .deadlineWith(fenderShootHigh())
-            .andThen(
-                stopShooter(),
-                stopIndexer()
-            );
+        .deadlineWith(fenderShootHigh());
     }
     /**
-     * Shoot in the low goal from against the fender.
-     * Does NOT stop the shooter/indexer when finished, the interrupting
-     * command must do this.
+     * Shoot in the low goal from against the fender perpetually.
+     * This command must be interrupted and will stop shooting/indexing once interrupted.
      */
     public Command fenderShootLow(){
         return setShooterState(ShotMap.kFenderLow)
-            .andThen(()->indexer.setVoltageFeed(), indexer); 
+        .alongWith(feedCargo(shooter::withinTolerance));
     }
     /**
      * Shoot in the low goal from against the fender for timeout seconds
-     * and then stop the indexer/shooter. This command will not stop the 
-     * indexer/shooter if interrupted.
+     * and then stop the indexer/shooter.
      */
     public Command fenderShootLow(double timeout){
         return new WaitCommand(timeout)
-            .deadlineWith(fenderShootLow())
-            .andThen(
-                stopShooter(),
-                stopIndexer()
-            );
+        .deadlineWith(fenderShootLow());
     }
     
     /**

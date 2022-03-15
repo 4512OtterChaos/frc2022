@@ -31,6 +31,8 @@ public class Shooter extends SubsystemBase {
     private final LinearServo leftServo = new LinearServo(kLeftServoChannel, kServoLengthMM, kServoSpeedMM);
     private final LinearServo rightServo = new LinearServo(kRightServoChannel, kServoLengthMM, kServoSpeedMM);
 
+    private State targetState = new State();
+
     public Shooter() {
         setupFlywheel(true);
         
@@ -87,6 +89,7 @@ public class Shooter extends SubsystemBase {
 
     }
     public void setState(State state){
+        targetState = state;
         setRPM(state.rpm);
         setHood(state.hoodMM);
     }
@@ -99,6 +102,10 @@ public class Shooter extends SubsystemBase {
             TalonUtil.velocityToRotations(rightMotor.getSelectedSensorVelocity(), 1)*60,
             rightServo.getPosition()
         );
+    }
+    public State getTargetState(){return targetState;}
+    public boolean withinTolerance(){
+        return getState().withinTolerance(getTargetState());
     }
 
     public void log(){

@@ -10,7 +10,7 @@ import frc.robot.util.FieldUtil;
 public final class ShotMap {
 
     private static final TreeMap<Double, ShotMapEntry> map = new TreeMap<>();
-    public static final Shooter.State kFenderLow = new Shooter.State(1500, 50);
+    public static final Shooter.State kFenderLow = new Shooter.State(1500, 25);
 
     static {
         // high goal states at distance in inches
