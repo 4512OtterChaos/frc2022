@@ -116,6 +116,78 @@ public class AutoOptions {
             .andThen(superstructure.stop())
            
         );
+        autoOptions.addOption("-1auto",
+            new WaitCommand(2)
+            .deadlineWith(superstructure.dumpCargo())
+            
+            .andThen(
+                autoFollowTrajectory(
+                    drivetrain, 
+                    "sabotage", 
+                    AutoConstants.kMediumSpeedConfig, 
+                    true
+                )
+            )
+            
+            .andThen(superstructure.stopDrive())
+            
+            .andThen(
+                autoFollowTrajectory(
+                    drivetrain, 
+                    "sabotage2", 
+                    AutoConstants.kMediumSpeedConfig, 
+                    false)
+                .deadlineWith(superstructure.intakeIndexCargo())
+            )
+            
+            .andThen(
+                superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(2.5)
+            )
+            
+        );
+        
+        autoOptions.addOption("QuintupleLeft", 
+            autoFollowTrajectory(
+                drivetrain, 
+                "QuintetLeft1", 
+                AutoConstants.kMediumSpeedConfig, 
+                true
+                )
+            .deadlineWith(superstructure.intakeIndexCargo())
+            .andThen(()->drivetrain.stop(), drivetrain)
+            .andThen(
+                superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(2.5)
+            )
+            .andThen(
+                autoFollowTrajectory(
+                    drivetrain, 
+                    "QuintetLeft2", 
+                    AutoConstants.kMediumSpeedConfig, 
+                    false
+                )
+                .deadlineWith(superstructure.intakeIndexCargo())
+            )
+            
+            .andThen(()->drivetrain.stop(), drivetrain)
+            .andThen(
+                superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(2.5)
+            )
+            .andThen(
+                autoFollowTrajectory(
+                drivetrain, 
+                "QuintetLeft3", 
+                AutoConstants.kMediumSpeedConfig, 
+                false)
+                .deadlineWith(superstructure.intakeIndexCargo())
+            )
+            
+            .andThen(()->drivetrain.stop(), drivetrain)
+            .andThen(
+                superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(2.5)
+            )
+            
+            
+        );
         autoOptions.addOption("QuintupleRight",
             superstructure.fenderShootHigh(1.5)
             .andThen(()->{
@@ -184,6 +256,7 @@ public class AutoOptions {
             )
             .andThen(()->drivetrain.stop(), drivetrain)
         );
+        
     }
 
     /**
