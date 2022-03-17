@@ -81,10 +81,11 @@ public class Robot extends TimedRobot {
 
     @Override
     public void simulationInit(){
+        container.simulationInit();
     }
     @Override
     public void simulationPeriodic(){
-        REVPhysicsSim.getInstance().run();
+        container.simulationPeriodic();
         // calculate voltage sag due to current draw
         RoboRioSim.setVInVoltage(BatterySim.calculateDefaultBatteryLoadedVoltage(container.getCurrentDraw()));
     }

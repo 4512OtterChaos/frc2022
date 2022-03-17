@@ -11,6 +11,9 @@ public class FieldUtil {
     );
     // distance from the center of the hub to the fender wall
     public static final double kCenterToFenderDist = Units.inchesToMeters(33.512);
+    public static final double kVisionRingDiameter = Units.inchesToMeters(53.375);
+    // ground to center of the vision tape
+    public static final double kVisionRingHeight = Units.inchesToMeters(102.625);
     // diameter of the circle that the cargo adjacent to the tarmac is placed on
     public static final double kCargoPlacementDiameter = Units.inchesToMeters(306);
     

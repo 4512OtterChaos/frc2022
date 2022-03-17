@@ -55,7 +55,7 @@ public class SwerveDrive extends SubsystemBase {
     // our auto controller which follows trajectories and adjusts target chassis speeds to reach a desired pose
     private final HolonomicDriveController pathController = new HolonomicDriveController(xController, yController, thetaController);
 
-    private final Field2d field2d = new Field2d();
+    private Trajectory logTrajectory;
     
     public SwerveDrive() {
         
@@ -63,8 +63,6 @@ public class SwerveDrive extends SubsystemBase {
         
         zeroGyro();
         
-        SmartDashboard.putData("Field", field2d);
-
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
         thetaController.setTolerance(kThetaPositionTolerance, kThetaVelocityTolerance);
         pathController.setEnabled(true); // disable for feedforward-only auto
@@ -78,8 +76,6 @@ public class SwerveDrive extends SubsystemBase {
 
         // display our robot (and individual modules) pose on the field
         odometry.update(getGyroYaw(), getModuleStates());
-        field2d.setRobotPose(getPose());
-        field2d.getObject("Swerve Modules").setPoses(getModulePoses());
     }
 
     /**
@@ -271,9 +267,8 @@ public class SwerveDrive extends SubsystemBase {
             module.log();
         }
     }
-    public void logTrajectory(Trajectory trajectory){
-        field2d.getObject("Trajectory").setTrajectory(trajectory);
-    }
+    public void logTrajectory(Trajectory trajectory) {logTrajectory = trajectory;}
+    public Trajectory getLogTrajectory() {return logTrajectory;}
 
 
 

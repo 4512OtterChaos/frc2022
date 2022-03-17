@@ -21,6 +21,7 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.simulation.DIOSim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -85,9 +86,17 @@ public class Indexer extends SubsystemBase {
         double time = Timer.getFPGATimestamp();
 
         estimatedRPM = (pos - lastPosition) / (time - lastTime) * 60;
+        estimatedRPM *= 24.0 / 36.0;
 
         lastPosition = pos;
         lastTime = time;
+    }
+    /**
+     * @return Estimated RPM of the indexer wheels
+     */
+    public double getRPM(){
+        //return estimatedRPM;
+        return encoder.getVelocity();
     }
     
     public boolean getBottomSensed(){
@@ -103,20 +112,32 @@ public class Indexer extends SubsystemBase {
     public void log(){
         SmartDashboard.putBoolean("Indexer/Bottom Sensed", getBottomSensed());
         SmartDashboard.putBoolean("Indexer/Top Sensed", getTopSensed());
-        SmartDashboard.putNumber("Indexer/RPM", estimatedRPM);
+        SmartDashboard.putNumber("Indexer/RPM", getRPM());
     }
 
 
 
     // Simulation
-    // init
+    private final FlywheelSim flywheelSim = new FlywheelSim(
+        LinearSystemId.identifyVelocitySystem(kFF.kv, kFF.ka),
+        DCMotor.getNEO(1),
+        1,
+        VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(3))
+    );
+    private final DIOSim bottomSensorSim = new DIOSim(bottomSensor);
+    private final DIOSim topSensorSim = new DIOSim(topSensor);
     {
         REVPhysicsSim.getInstance().addSparkMax(motor, DCMotor.getNEO(1));
     }
-
     @Override
     public void simulationPeriodic(){
+        flywheelSim.setInputVoltage(motor.getAppliedOutput()*motor.getVoltageCompensationNominalVoltage());
+        flywheelSim.update(0.02);
+
+        double positionDelta = flywheelSim.getAngularVelocityRPM() / 60 * 0.02;
     }
+    public void setBottomSimSensed(boolean is){bottomSensorSim.setValue(!is);}
+    public void setTopSimSensed(boolean is){topSensorSim.setValue(!is);}
 
     public double getCurrentDraw(){
         return motor.getOutputCurrent();

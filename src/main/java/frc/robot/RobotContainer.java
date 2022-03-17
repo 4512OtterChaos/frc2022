@@ -4,12 +4,14 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -25,6 +27,7 @@ import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
+import frc.robot.util.CargoSimulation;
 import frc.robot.util.FieldUtil;
 
 public class RobotContainer {
@@ -39,12 +42,15 @@ public class RobotContainer {
 
     private final AutoOptions autoOptions = new AutoOptions(climber, drivetrain, indexer, intake, shooter, superstructure);
 
+    private final Field2d field = new Field2d();
+
     public RobotContainer(){
 
         configureDriverBinds(driver);
         //configureTestBinds(driver);
 
         autoOptions.submit();
+        SmartDashboard.putData("Field", field);
 
         //LiveWindow.disableAllTelemetry();
     }
@@ -266,6 +272,50 @@ public class RobotContainer {
             .whenReleased(()->indexer.stop(), indexer);
     }
 
+    public void log(){
+        drivetrain.log();
+        intake.log();
+        indexer.log();
+        shooter.log();
+        climber.log();
+
+        field.setRobotPose(drivetrain.getPose());
+        field.getObject("Swerve Modules").setPoses(drivetrain.getModulePoses());
+        Trajectory logTrajectory = drivetrain.getLogTrajectory();
+        if(logTrajectory == null) logTrajectory = new Trajectory();
+        field.getObject("Trajectory").setTrajectory(logTrajectory);
+
+        Translation2d driveTranslation = drivetrain.getPose().getTranslation();
+        SmartDashboard.putNumber(
+            "Shooter/DistanceInches",
+            Units.metersToInches(driveTranslation.getDistance(FieldUtil.kFieldCenter))
+        );
+
+        if(!DriverStation.isFMSAttached()) NetworkTableInstance.getDefault().flush();
+    }
+
+
+
+    //----- Simulation
+
+    private final Field2d xzField = new Field2d();
+    private CargoSimulation cargoSimulation = new CargoSimulation(
+        drivetrain::getPose,
+        intake::getRPM,
+        indexer::getRPM,
+        shooter::getState,
+        indexer::setBottomSimSensed,
+        indexer::setTopSimSensed,
+        field,
+        xzField
+    );
+    public void simulationInit(){
+        SmartDashboard.putData("Field XZ", xzField);
+    }
+    public void simulationPeriodic(){
+        cargoSimulation.update();
+    }
+
     public double getCurrentDraw(){
         double sum = 0;
         sum += drivetrain.getCurrentDraw();
@@ -273,18 +323,5 @@ public class RobotContainer {
         sum += indexer.getCurrentDraw();
         sum += intake.getCurrentDraw();
         return sum;
-    }
-
-    public void log(){
-        Translation2d driveTranslation = drivetrain.getPose().getTranslation();
-        SmartDashboard.putNumber(
-            "Shooter/DistanceInches",
-            Units.metersToInches(driveTranslation.getDistance(FieldUtil.kFieldCenter))
-        );
-        drivetrain.log();
-        indexer.log();
-        shooter.log();
-        climber.log();
-        if(!DriverStation.isFMSAttached()) NetworkTableInstance.getDefault().flush();
     }
 }

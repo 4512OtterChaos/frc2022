@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.TalonUtil;
 
@@ -63,6 +64,16 @@ public class Intake extends SubsystemBase {
     
     public boolean getExtended(){return pistons.get() == Value.kForward;}
     */
+    /**
+     * @return RPM of intake wheels
+     */
+    public double getRPM(){
+        return TalonUtil.velocityToRotations(motor.getSelectedSensorVelocity(), 2) * 60;
+    }
+
+    public void log(){
+        SmartDashboard.putNumber("Intake/RPM", getRPM());
+    }
 
 
     // Simulation

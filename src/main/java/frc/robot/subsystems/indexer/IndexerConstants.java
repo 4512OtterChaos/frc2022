@@ -11,7 +11,7 @@ public class IndexerConstants {
 
     public static final double kVoltageIn = 4; // intake/index
     public static final double kVoltageFeed = 8; // feed shooter
-    public static final double kVoltageOut = 8;
+    public static final double kVoltageOut = -8;
 
     // Feedforward loaded with cargo (simulation rn)
     public static final SimpleMotorFeedforward kFF = new SimpleMotorFeedforward(
