@@ -5,6 +5,9 @@ import static frc.robot.auto.AutoConstants.*;
 import com.ctre.phoenix.sensors.BasePigeonSimCollection;
 import com.ctre.phoenix.sensors.WPI_Pigeon2;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -15,8 +18,10 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -39,7 +44,7 @@ public class SwerveDrive extends SubsystemBase {
         swerveMods[2].getModuleConstants().centerOffset,
         swerveMods[3].getModuleConstants().centerOffset
     );
-    private final SwerveDriveOdometry odometry = new SwerveDriveOdometry(kinematics, new Rotation2d());
+    private final SwerveDrivePoseEstimator poseEstimator;
     private ChassisSpeeds targetChassisSpeeds = new ChassisSpeeds();
     private boolean isFieldRelative = true;
 
@@ -66,6 +71,15 @@ public class SwerveDrive extends SubsystemBase {
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
         thetaController.setTolerance(kThetaPositionTolerance, kThetaVelocityTolerance);
         pathController.setEnabled(true); // disable for feedforward-only auto
+
+        poseEstimator = new SwerveDrivePoseEstimator(
+            getGyroYaw(),
+            new Pose2d(),
+            kinematics,
+            VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5)),
+            VecBuilder.fill(Units.degreesToRadians(0.01)),
+            calculateVisionNoise()
+        );
     }
 
     @Override
@@ -75,7 +89,7 @@ public class SwerveDrive extends SubsystemBase {
         }
 
         // display our robot (and individual modules) pose on the field
-        odometry.update(getGyroYaw(), getModuleStates());
+        poseEstimator.update(getGyroYaw(), getModuleStates());
     }
 
     /**
@@ -182,8 +196,15 @@ public class SwerveDrive extends SubsystemBase {
     public void zeroGyro(){
         gyro.setYaw(0);
     }
+    public void addVisionMeasurement(Pose2d measurement, double latencySeconds){
+        poseEstimator.addVisionMeasurement(
+            measurement,
+            Timer.getFPGATimestamp() - latencySeconds,
+            calculateVisionNoise()
+        );
+    }
     public void resetOdometry(Pose2d pose){
-        odometry.resetPosition(pose, getGyroYaw());
+        poseEstimator.resetPosition(pose, getGyroYaw());
     }
     public void resetPathController(){
         xController.reset();
@@ -194,19 +215,33 @@ public class SwerveDrive extends SubsystemBase {
     public boolean getIsFieldRelative() {return isFieldRelative;}
 
     public Pose2d getPose() {
-        return odometry.getPoseMeters();
+        return poseEstimator.getEstimatedPosition();
     }
     /**
      * Swerve drive rotation on the field reported by odometry.
      */
     public Rotation2d getHeading(){
-        return odometry.getPoseMeters().getRotation();
+        return getPose().getRotation();
     }
     /**
      * Raw gyro yaw (this may not match the field heading!).
      */
     public Rotation2d getGyroYaw(){
         return gyro.getRotation2d();
+    }
+    /**
+     * Adjust the measurement noise/trust of vision estimation as robot velocities change.
+     */
+    private Vector<N3> calculateVisionNoise(){
+        ChassisSpeeds speeds = getChassisSpeeds();
+        double linearPercent = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond) / (
+            SwerveConstants.kMaxLinearSpeed);
+        double angularPercent = Math.abs(speeds.omegaRadiansPerSecond) / SwerveConstants.kMaxAngularSpeed;
+        return VecBuilder.fill(
+            MathUtil.interpolate(0.6, 1.5, linearPercent),
+            MathUtil.interpolate(0.6, 1.5, linearPercent),
+            Units.degreesToRadians(MathUtil.interpolate(30, 60, angularPercent))
+        );
     }
 
     public double getMaxLinearVelocityMeters(){

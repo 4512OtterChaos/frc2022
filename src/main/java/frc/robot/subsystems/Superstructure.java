@@ -47,6 +47,14 @@ public class Superstructure extends SubsystemBase {
     
     @Override
     public void periodic() {
+        // adjust odometry with vision data
+        // without this, pose estimation is equivalent to normal odometry
+        if(vision.getHasTarget()){
+            drivetrain.addVisionMeasurement(
+                vision.getRobotPose(drivetrain.getHeading()),
+                vision.getLatencySeconds()
+            );
+        }
     }
 
     public Command stopDrive(){
