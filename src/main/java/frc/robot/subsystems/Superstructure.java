@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
+import frc.robot.common.Limelight;
 import frc.robot.subsystems.climber.Climber;
 import frc.robot.subsystems.drivetrain.SwerveDrive;
 import frc.robot.subsystems.indexer.Indexer;
@@ -32,13 +33,15 @@ public class Superstructure extends SubsystemBase {
     private final Indexer indexer;
     private final Intake intake;
     private final Shooter shooter;
+    private final Vision vision;
 
-    public Superstructure(Climber climber, SwerveDrive drivetrain, Indexer indexer, Intake intake, Shooter shooter) {
+    public Superstructure(Climber climber, SwerveDrive drivetrain, Indexer indexer, Intake intake, Shooter shooter, Vision vision) {
         this.climber = climber;
         this.drivetrain = drivetrain;
         this.indexer = indexer;
         this.intake = intake;
         this.shooter = shooter;
+        this.vision = vision;
     }
     
     @Override
@@ -247,6 +250,43 @@ public class Superstructure extends SubsystemBase {
                 );
                 //Indexer feed when shooter && drivetrain ready
                 if(driveAtGoal && shooter.getState().withinTolerance(targetShooterState)){
+                    indexer.setVoltageFeed();
+                }
+                else{
+                    indexer.stop();
+                }
+            }, 
+            (interrupted)->{
+                shooter.stop();
+                indexer.stop();
+                drivetrain.stop();
+            },
+            ()->false,
+            drivetrain, shooter, indexer
+        );
+    }
+    public Command cameraShootOnly(
+        DoubleSupplier vxMeters, DoubleSupplier vyMeters, boolean openLoop
+        ){
+        return new FunctionalCommand(
+            ()->{
+                drivetrain.resetPathController();
+            }, 
+            ()->{
+                //shooter setState to odometry distance
+                double distance = vision.getDistance();
+
+                Shooter.State targetShooterState = ShotMap.find(distance);
+                shooter.setState(targetShooterState);
+                //Drivetrain heading target to hub
+                boolean driveAtGoal = drivetrain.drive(
+                    vxMeters.getAsDouble(),
+                    vyMeters.getAsDouble(),
+                    drivetrain.getPose().getRotation().minus(vision.getYaw()),
+                    openLoop
+                );
+                //Indexer feed when shooter && drivetrain ready
+                if(driveAtGoal && shooter.getState().withinTolerance(targetShooterState) && vision.getHasTarget()){
                     indexer.setVoltageFeed();
                 }
                 else{

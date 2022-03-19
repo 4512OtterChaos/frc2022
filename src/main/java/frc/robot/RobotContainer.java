@@ -17,8 +17,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.auto.AutoOptions;
+import frc.robot.common.Limelight;
 import frc.robot.common.OCXboxController;
 import frc.robot.subsystems.Superstructure;
+import frc.robot.subsystems.Vision;
 import frc.robot.subsystems.climber.Climber;
 import frc.robot.subsystems.drivetrain.SwerveDrive;
 import frc.robot.subsystems.drivetrain.commands.TeleopDriveAngle;
@@ -27,6 +29,7 @@ import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
+import frc.robot.subsystems.shooter.ShotMap;
 import frc.robot.util.CargoSimulation;
 import frc.robot.util.FieldUtil;
 
@@ -36,7 +39,8 @@ public class RobotContainer {
     private final Indexer indexer = new Indexer();
     private final Intake intake = new Intake();
     private final Shooter shooter = new Shooter();
-    private final Superstructure superstructure = new Superstructure(climber, drivetrain, indexer, intake, shooter);
+    private final Vision vision = new Vision();
+    private final Superstructure superstructure = new Superstructure(climber, drivetrain, indexer, intake, shooter, vision);
 
     private final OCXboxController driver = new OCXboxController(0);
 
@@ -114,11 +118,11 @@ public class RobotContainer {
 
         //Climber down
         controller.povDownButton
-            .whenPressed(()->climber.setVolts(-8), climber)
+            .whenPressed(()->climber.setVolts(-10), climber)
             .whenReleased(()->climber.setVolts(0), climber);
         //Climber up
         controller.povUpButton
-            .whenPressed(()->climber.setVolts(8), climber)
+            .whenPressed(()->climber.setVolts(10), climber)
             .whenReleased(()->climber.setVolts(0), climber);
 
         //Clear intake and indexer
@@ -159,7 +163,7 @@ public class RobotContainer {
         
         //controller.bButton.whenPressed(()->intake.setExtended(false));
 
-        controller.leftBumper.whenPressed(superstructure.fenderShootHigh())
+        controller.yButton.whenPressed(superstructure.fenderShootHigh())
         .whenReleased(()->{
             shooter.stop();
             indexer.stop();
@@ -186,16 +190,29 @@ public class RobotContainer {
             )
         );
 
+        controller.leftBumper.whenPressed(
+            superstructure.cameraShootOnly(
+                ()->driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
+                ()->driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
+                true
+            ).beforeStarting(()->controller.resetLimiters())
+        )
+        .whenReleased(
+            superstructure.stopDrive()
+            .alongWith(
+                superstructure.stopIndexer(),
+                superstructure.stopShooter()
+            )
+        );
+
         // estimate hood angle continuously before shooting
         shooter.setDefaultCommand(new RunCommand(()->{
             shooter.setHood(
-                /*shotMap.find(
+                ShotMap.find(
                     Units.metersToInches(
-                        drivetrain.getPose().getTranslation().getDistance(FieldUtil.kFieldCenter);
+                        drivetrain.getPose().getTranslation().getDistance(FieldUtil.kFieldCenter)
                     )
                 ).hoodMM
-                */
-                0
             );
         }, shooter));
     }
@@ -278,6 +295,7 @@ public class RobotContainer {
         indexer.log();
         shooter.log();
         climber.log();
+        vision.log();
 
         field.setRobotPose(drivetrain.getPose());
         field.getObject("Swerve Modules").setPoses(drivetrain.getModulePoses());
