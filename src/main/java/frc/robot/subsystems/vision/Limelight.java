@@ -1,4 +1,4 @@
-package frc.robot.common;
+package frc.robot.subsystems.vision;
 
 /*----------------------------------------------------------------------------*/
 /* Copyright (c) 2018-2019 FIRST. All Rights Reserved.                        */
@@ -15,7 +15,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.util.FieldUtil;
 
 /**
  * Class for interfacing with a Limelight.
@@ -37,14 +37,14 @@ public class Limelight {
     private final double kTargetHeight;
     private final double kLatencyMs;
 
-    public Limelight(Translation2d camTranslation, double cameraHeight, double cameraPitch, Translation2d targTranslation, double targHeight, double latency){
+    public Limelight(Translation2d camTranslation, double cameraHeightMeters, double cameraPitch, Translation2d targTranslation, double targHeightMeters, double latency){
         visionTable = NetworkTableInstance.getDefault().getTable("limelight");
 
         kCameraTranslation = camTranslation;
-        kCameraHeight = cameraHeight;
+        kCameraHeight = cameraHeightMeters;
         kCameraPitch = cameraPitch;
         kTargetTranslation = targTranslation;
-        kTargetHeight = targHeight;
+        kTargetHeight = targHeightMeters;
         kLatencyMs = latency;
     }
 
@@ -130,10 +130,10 @@ public class Limelight {
     /**
      * Returns field pose based on relative robot pose to the outer port.
      */
-    public Pose2d getFieldPose(Pose2d robotPose){
+    public Pose2d getFieldPose(Pose2d relativePose){
         return new Pose2d(
-            kTargetTranslation.plus(robotPose.getTranslation()),
-            robotPose.getRotation()
+            kTargetTranslation.plus(relativePose.getTranslation()),
+            relativePose.getRotation()
         );
 
     }
@@ -171,35 +171,30 @@ public class Limelight {
     
     // Trig
     /**
-     * Estimates camera pose relative to the outer port based on angle and heading.
+     * Estimates distance from robot center to target based on angle.
      */
-    private Pose2d getRelativeCamPose(Rotation2d heading){
-        double radians = heading.getRadians()+Math.PI*0.5;
-        double metersDist = Units.inchesToMeters(getTrigDistance());
-        double y = Math.cos(radians)*metersDist;
-        double x = Math.sin(radians)*-metersDist;
-        return new Pose2d(x, y, heading);
-    }
-    /**
-     * Estimates robot pose relative to the outer port based on angle and heading.
-     */
-    public Pose2d getRelativeRobotPose(Rotation2d heading){
-        return getRelativeRobotPose(getRelativeCamPose(heading));
-    }
-    /**
-     * Estimates field pose based on relative robot pose with angle and heading.
-     */
-    public Pose2d getFieldPose(Rotation2d heading){
-        return getFieldPose(getRelativeRobotPose(heading));
-    }
-    /**
-     * Estimates distance in inches(from camera) to target based on angle.
-     */
-    public double getTrigDistance(){
-        double difference = kTargetHeight-kCameraHeight;
-        double angle = Units.degreesToRadians(kCameraPitch+getTy());
+    public double getCamDistance(){
         if(!getHasTarget()) return 0;
-        return (difference/Math.tan(angle));
+        // floor distance to camera
+        double angle = Units.degreesToRadians(kCameraPitch+getTy());
+        double camDist = (kTargetHeight-kCameraHeight) / (Math.tan(angle) * Math.cos(getTx()));
+        // correct for camera offset        
+        return camDist;
+    }
+    public double getRobotDistance(){
+        return getCamDistance() + kCameraTranslation.getX() * -Math.cos(Math.toRadians(getTx()));
+    }
+    public Rotation2d getRobotYaw(){
+        // angle cam-to-target
+        Rotation2d angle = Rotation2d.fromDegrees(-getTx());
+        // hub translation with camera as (0,0)
+        Translation2d relativeTarget = new Translation2d(
+            getCamDistance(),
+            angle
+        // change origin to robot center
+        ).plus(kCameraTranslation.unaryMinus());
+        // angle from robot center to relative target translation
+        return new Rotation2d(relativeTarget.getX(), relativeTarget.getY());
     }
 
     public Pose2d getRelativeTargetPose(double heading){
