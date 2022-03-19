@@ -21,8 +21,8 @@ public class IndexerConstants {
     );
     
     // Current limits
-    public static final int kContinuousCurrentLimit = 35;
-    public static final int kPeakCurrentLimit = 40;
+    public static final int kContinuousCurrentLimit = 40;
+    public static final int kPeakCurrentLimit = 50;
     public static final double kPeakCurrentDuration = 0.1;
     // Voltage compensation`
     public static final double kVoltageSaturation = 12;

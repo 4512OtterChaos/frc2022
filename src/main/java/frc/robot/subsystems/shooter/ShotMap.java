@@ -5,6 +5,7 @@ import java.util.TreeMap;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.interpolation.Interpolatable;
 import edu.wpi.first.math.util.Units;
+import frc.robot.subsystems.drivetrain.SwerveConstants;
 import frc.robot.util.FieldUtil;
 
 public final class ShotMap {
@@ -16,7 +17,7 @@ public final class ShotMap {
         // high goal states at distance in inches
         map.put(
             // fender high shot
-            Units.metersToInches(FieldUtil.kCenterToFenderDist),
+            Units.metersToInches(FieldUtil.kCenterToFenderDist)+SwerveConstants.kRobotWidth/2.0,
             new ShotMapEntry(2600, 3, 1.5)
         );
         map.put(100.0, new ShotMapEntry(3000, 15, 1.5));

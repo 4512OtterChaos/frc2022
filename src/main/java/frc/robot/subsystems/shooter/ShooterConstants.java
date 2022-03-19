@@ -21,7 +21,7 @@ public final class ShooterConstants {
     public static final int kLeftServoChannel = 0;
     public static final int kRightServoChannel = 1;
     public static final double kServoLengthMM = 100;
-    public static final double kServoSpeedMM = 25;
+    public static final double kServoSpeedMM = 20;
     public static final double kServoMaxMM = 60;
 
     // Current limiting

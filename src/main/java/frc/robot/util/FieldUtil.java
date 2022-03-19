@@ -14,6 +14,15 @@ public class FieldUtil {
     public static final double kVisionRingDiameter = Units.inchesToMeters(53.375);
     // ground to center of the vision tape
     public static final double kVisionRingHeight = Units.inchesToMeters(102.625);
+
+    public static final double kUpperGoalBottomDiameter = Units.inchesToMeters(16.75);
+    // Bottom of the upper hub (agitator) from the ground
+    public static final double kUpperGoalBottomHeight = Units.inchesToMeters(73);
+    // upper hub slope
+    public static final Rotation2d kUpperHubIncline = new Rotation2d(
+        (kVisionRingDiameter - kUpperGoalBottomDiameter)/2.0,
+        kVisionRingHeight - kUpperGoalBottomHeight
+    );
     // diameter of the circle that the cargo adjacent to the tarmac is placed on
     public static final double kCargoPlacementDiameter = Units.inchesToMeters(306);
     

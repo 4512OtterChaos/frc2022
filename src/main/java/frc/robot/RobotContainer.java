@@ -209,9 +209,7 @@ public class RobotContainer {
         shooter.setDefaultCommand(new RunCommand(()->{
             shooter.setHood(
                 ShotMap.find(
-                    Units.metersToInches(
-                        drivetrain.getPose().getTranslation().getDistance(FieldUtil.kFieldCenter)
-                    )
+                    drivetrain.getPose().getTranslation().getDistance(FieldUtil.kFieldCenter)
                 ).hoodMM
             );
         }, shooter));
@@ -319,6 +317,7 @@ public class RobotContainer {
     private final Field2d xzField = new Field2d();
     private CargoSimulation cargoSimulation = new CargoSimulation(
         drivetrain::getPose,
+        drivetrain::getChassisSpeeds,
         intake::getRPM,
         indexer::getRPM,
         shooter::getState,

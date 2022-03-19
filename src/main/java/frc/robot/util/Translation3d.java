@@ -40,13 +40,13 @@ public class Translation3d implements Interpolatable<Translation3d>{
     public double getDistance(Translation3d other) {
         return Math.hypot(Math.hypot(other.x - x, other.y - y), other.z - z);
     }
-    public double getNorm(Translation3d other) {
+    public double getNorm() {
         return Math.hypot(Math.hypot(x, y), z);
     }
     public Rotation2d getYawError(Translation3d other){
         return new Rotation2d(other.x - x, other.y - y);
     }
-    public Rotation2d getPitchError(Translation3d other){
+    public Rotation2d getPitchTan(Translation3d other){
         return new Rotation2d(getDistance(other), other.z - z);
     }
 
@@ -55,6 +55,9 @@ public class Translation3d implements Interpolatable<Translation3d>{
     }
     public Translation3d plusXY(Translation2d other){
         return new Translation3d(other.getX() + x, other.getY() + y, z);
+    }
+    public Translation3d plusZ(double z){
+        return new Translation3d(x, y, this.z + z);
     }
 
     @Override
