@@ -4,13 +4,13 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 
 public class IndexerConstants {
     public static final int kMotorID = 10;
-    public static final int kBottomSensorID = 0;
-    public static final int kTopSensorID = 1;
+    public static final int kBottomSensorID = 1;
+    public static final int kTopSensorID = 0;
     
     public static final boolean kMotorInverted = true;
 
     public static final double kVoltageIn = 4; // intake/index
-    public static final double kVoltageFeed = 10; // feed shooter
+    public static final double kVoltageFeed = 6; // feed shooter
     public static final double kVoltageOut = -8;
 
     // Feedforward loaded with cargo (simulation rn)

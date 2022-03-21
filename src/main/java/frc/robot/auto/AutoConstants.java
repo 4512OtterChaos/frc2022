@@ -26,6 +26,6 @@ public class AutoConstants {
 
     // packaged configs for path following
     public static final TrajectoryConfig kMaxSpeedConfig = new TrajectoryConfig(kMaxLinearSpeed, kMaxLinearAcceleration);
-    public static final TrajectoryConfig kMediumSpeedConfig = new TrajectoryConfig(0.7*kMaxLinearSpeed, 0.7*kMaxLinearAcceleration);
+    public static final TrajectoryConfig kMediumSpeedConfig = new TrajectoryConfig(0.7*kMaxLinearSpeed, 0.65*kMaxLinearAcceleration);
     public static final TrajectoryConfig kSlowSpeedConfig = new TrajectoryConfig(0.4*kMaxLinearSpeed, 0.4*kMaxLinearAcceleration);
 }

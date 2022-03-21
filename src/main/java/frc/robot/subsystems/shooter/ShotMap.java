@@ -18,7 +18,7 @@ public final class ShotMap {
         map.put(
             // fender high shot
             Units.metersToInches(FieldUtil.kCenterToFenderDist)+SwerveConstants.kRobotWidth/2.0,
-            new ShotMapEntry(2600, 3, 1.5)
+            new ShotMapEntry(2800, 0, 1.5)
         );
         map.put(100.0, new ShotMapEntry(3000, 15, 1.5));
         map.put(200.0, new ShotMapEntry(3500, 25, 1.75));

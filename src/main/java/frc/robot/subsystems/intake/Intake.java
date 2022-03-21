@@ -33,7 +33,8 @@ public class Intake extends SubsystemBase {
         setUpIntake(true);
     }
     private void setUpIntake(boolean init){
-        if(init){
+        
+            if(init){
             motor.configAllSettings(kIntakeConfiguration);
         }
         motor.setNeutralMode(NeutralMode.Brake);
@@ -103,4 +104,5 @@ public class Intake extends SubsystemBase {
     public double getCurrentDraw(){
         return motor.getSupplyCurrent();
     }
+    
 }

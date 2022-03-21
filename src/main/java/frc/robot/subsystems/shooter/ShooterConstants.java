@@ -16,7 +16,7 @@ public final class ShooterConstants {
     public static final TalonFXInvertType kLeftMotorInversion = TalonFXInvertType.OpposeMaster;
     public static final TalonFXInvertType kRightMotorInversion = TalonFXInvertType.CounterClockwise;
     public static final double kMaxRPM = 5700;
-    public static final double kRPMTolerance = 500;    
+    public static final double kRPMTolerance = 250;    
     // Hood
     public static final int kLeftServoChannel = 0;
     public static final int kRightServoChannel = 1;
@@ -35,12 +35,12 @@ public final class ShooterConstants {
     // Feedforward
     public static final SimpleMotorFeedforward kFF = new SimpleMotorFeedforward(
         0, // Voltage to break static friction
-        0.02, // Volts per radian per second
+        0.018, // Volts per radian per second
         0.0025 // Volts per radian per second squared
     );
 
     // PID
-    public static final double kP = 0;
+    public static final double kP = 0.05;
     public static final double kI = 0;
     public static final double kD = 0;
 

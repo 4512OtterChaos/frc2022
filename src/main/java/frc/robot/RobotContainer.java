@@ -84,7 +84,7 @@ public class RobotContainer {
         // when no other command is using the drivetrain, we
         // pass the joysticks for forward, strafe, and angular position control
         drivetrain.setDefaultCommand(new TeleopDriveBasic(controller, drivetrain));
-
+        //drivetrain.setDefaultCommand(new TeleopDriveAngle(controller, drivetrain));
         // push-to-change driving "speed"
         controller.rightBumper
             .whenPressed(()->controller.setDriveSpeed(OCXboxController.kSpeedMax))
@@ -208,9 +208,12 @@ public class RobotContainer {
         // estimate hood angle continuously before shooting
         shooter.setDefaultCommand(new RunCommand(()->{
             shooter.setHood(
-                ShotMap.find(
+                /*ShotMap.find(
                     drivetrain.getPose().getTranslation().getDistance(FieldUtil.kFieldCenter)
+                    
                 ).hoodMM
+                */
+                0
             );
         }, shooter));
     }
