@@ -88,9 +88,9 @@ public class SwerveConstants {
     public static final double kDriveKI = 0;
     public static final double kDriveKD = 0;
 
-    public static final double kSteerKP = isReal ? 0.3 : 0.1;
-    public static final double kSteerKI = isReal ? 0 : 0;
-    public static final double kSteerKD = isReal ? 1 : 0;
+    public static final double kSteerKP = 0.3;
+    public static final double kSteerKI = 0;
+    public static final double kSteerKD = 1;
     public static final double kSteerVelocity = Units.rotationsToRadians(4);
     public static final double kSteerAcceleration = Units.rotationsToRadians(20);
     public static final int kAllowableSteeringError = 80;
