@@ -255,7 +255,7 @@ public class RobotContainer {
             double rpmDelta = 0;
             if(controller.povUpButton.get()) rpmDelta += 100;
             if(controller.povDownButton.get()) rpmDelta -= 100;
-            shooter.setRPM(shooter.getState().rpm + rpmDelta);
+            shooter.setRPM(shooter.getTargetState().rpm + rpmDelta);
 
             //shooter.setShooterVoltage(controller.getLeftTriggerAxis()*12);
         }, shooter));
