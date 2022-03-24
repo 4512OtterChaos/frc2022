@@ -17,7 +17,7 @@ public final class ShotMap {
         // high goal states at distance in inches
         map.put(
             // fender high shot
-            Units.metersToInches(FieldUtil.kCenterToFenderDist)+SwerveConstants.kRobotWidth/2.0,
+            Units.metersToInches(FieldUtil.kCenterToFenderDist+SwerveConstants.kRobotWidth/2.0),
             new ShotMapEntry(2800, 0, 1.5)
         );
         map.put(100.0, new ShotMapEntry(3000, 15, 1.5));

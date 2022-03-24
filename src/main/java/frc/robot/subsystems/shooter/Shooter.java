@@ -136,8 +136,7 @@ public class Shooter extends SubsystemBase {
             this(0, 0);
         }
         public boolean withinTolerance(State other){
-            double rpmError = Math.abs(other.rpm - rpm);
-            return rpmError <= kRPMTolerance && hoodMM == other.hoodMM;
+            return Math.abs(other.rpm - rpm) <= kToleranceRPM && Math.abs(other.hoodMM - hoodMM) < kServoToleranceMM;
         }
         
         @Override
