@@ -9,7 +9,6 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -26,9 +25,6 @@ import frc.robot.subsystems.drivetrain.commands.TeleopDriveBasic;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
-import frc.robot.subsystems.shooter.ShooterConstants;
-import frc.robot.subsystems.shooter.ShotMap;
-import frc.robot.subsystems.vision.Limelight;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.CargoSimulation;
 import frc.robot.util.FieldUtil;
@@ -175,8 +171,9 @@ public class RobotContainer {
             indexer.stop();
         }, shooter, indexer);
 
+        // auto shoot high hub with pose estimation
         controller.leftTriggerButton.whenPressed(
-            superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(
+            superstructure.autoShoot(
                 ()->driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
                 ()->driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
                 true
@@ -190,11 +187,14 @@ public class RobotContainer {
             )
         );
 
+        // auto shoot high hub with only vision data
         controller.leftBumper.whenPressed(
-            superstructure.cameraShootOnly(
+            superstructure.autoShoot(
                 ()->driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
                 ()->driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
-                true
+                true,
+                drivetrain.getPose().transformBy(vision.getRobotToTarget(drivetrain.getHeading())).getTranslation(),
+                ()->vision.getHasTarget()
             ).beforeStarting(()->controller.resetLimiters())
         )
         .whenReleased(

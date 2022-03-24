@@ -6,27 +6,21 @@ package frc.robot.subsystems.vision;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.FieldUtil;
+import frc.robot.util.VisionUtil;
 
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 public class Vision extends SubsystemBase {
 
-    private Limelight limelight = new Limelight(
-        kCameraOffset,
-        kCameraHeight,
-        kCameraPitch.getDegrees(),
-        FieldUtil.kFieldCenter,
-        FieldUtil.kVisionRingHeight,
-        kLatencyMs
-    );
+    private final Limelight limelight = new Limelight();
+
     public Vision() {
-        limelight.nuke();
     }
     
     @Override
@@ -42,30 +36,91 @@ public class Vision extends SubsystemBase {
             limelight.setLedMode(0);
         }
     }
-    public double getDistance(){
-        return limelight.getRobotDistance() + FieldUtil.kVisionRingDiameter;
+
+    /**
+     * Estimates XY Distance in meters from the camera to the target (including 
+     * distance to the hub center).
+     */
+    public double getCamDistanceMeters(){
+        return VisionUtil.calculateDistanceToTarget(
+            kCameraHeight,
+            FieldUtil.kVisionRingHeight,
+            kCameraPitch,
+            getTargetPitch()
+        ) + (FieldUtil.kVisionRingDiameter / 2.0); // + vision ring -> hub center
     }
-    public Pose2d getRobotPose(Rotation2d robotHeading){
-        Translation2d relativeTranslation = new Translation2d(
-            getDistance(),
+
+    /**
+     * Estimates the transform from the current robot pose to the target pose.
+     */
+    public Transform2d getRobotToTarget(Rotation2d robotHeading){
+        return kCameraOffset.plus(VisionUtil.estimateCameraToTarget(
+            VisionUtil.estimateCameraToTargetTranslation(
+                getCamDistanceMeters(),
+                getTargetYaw()
+            ),
+            new Pose2d(FieldUtil.kFieldCenter, new Rotation2d()),
             robotHeading
-        ).plus(FieldUtil.kFieldCenter);
-        return new Pose2d(relativeTranslation, robotHeading);
+        ));
     }
+    /**
+     * Estimates the robot's pose on the field given the distance to the target from the
+     * camera, the robot's heading, and the target's translation on the field.
+     * The robot is found relative to the target and then placed on the field using
+     * the target's field translation.
+     */
+    public Pose2d getRobotPose(Rotation2d robotHeading){
+        return VisionUtil.estimateFieldToRobot(
+            getCamDistanceMeters(),
+            getTargetYaw(),
+            robotHeading,
+            new Pose2d(FieldUtil.kFieldCenter, new Rotation2d()),
+            kCameraOffset
+        );
+    }
+
+    /**
+     * If the camera currently has an acquired target.
+     * This should be used whenever attempting to get vision data to ensure
+     * it is applicable.
+     */
     public boolean getHasTarget(){
         return limelight.getHasTarget();
     }
+
+    /**
+     * Target yaw reported by camera (lens -> target)
+     */
     public Rotation2d getTargetYaw(){
-        return limelight.getRobotYaw();
+        return Rotation2d.fromDegrees(limelight.getTx());
     }
+    /**
+     * Target yaw incorporating camera offset to get robot center -> target.
+     * Note this equivalent to the angle error between the robot's current camera yaw
+     * and the yaw that would face the camera to target.
+     */
+    public Rotation2d getRobotToTargetYaw(){
+        // get target relative to camera with offset corrected (robot center)
+        Translation2d relativeTarget = new Translation2d(
+            getCamDistanceMeters(),
+            getTargetYaw()
+        ).minus(kCameraOffset.getTranslation());
+        // angle of the relative translation from the origin
+        return new Rotation2d(relativeTarget.getX(), relativeTarget.getY());
+    }
+    /**
+     * Target pitch reported by camera (lens -> target)
+     */
     public Rotation2d getTargetPitch(){
         return Rotation2d.fromDegrees(limelight.getTy());
     }
+
     public double getLatencySeconds(){
         return limelight.getLatencySeconds();
     }
+
     public void log(){
         SmartDashboard.putNumber("Vision/YawDegrees", getTargetYaw().getDegrees());
-        SmartDashboard.putNumber("Vision/Distance", getDistance());
+        SmartDashboard.putNumber("Vision/Distance", getCamDistanceMeters());
     }
 }

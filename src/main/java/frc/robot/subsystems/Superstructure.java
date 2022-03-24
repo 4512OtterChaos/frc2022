@@ -9,11 +9,9 @@ import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.util.function.BooleanConsumer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
@@ -23,7 +21,6 @@ import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShotMap;
-import frc.robot.subsystems.vision.Limelight;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.FieldUtil;
 
@@ -234,72 +231,43 @@ public class Superstructure extends SubsystemBase {
      * @param vxMeters X velocity supplier
      * @param vyMeters Y velocity supplier
      * @param openLoop If should not use velocity PID on swerve modules
+     * @param targetTranslation The translation of the target to aim at on the field
+     * @param targetingCondition Any additional consideration that determines when
+     * the target angle should be updated and also when the indexer is ready to feed(in addition
+     * to shooter/drive tolerance).
      */
-    public Command otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(
-        DoubleSupplier vxMeters, DoubleSupplier vyMeters, boolean openLoop
+    public Command autoShoot(
+            DoubleSupplier vxMeters, DoubleSupplier vyMeters, boolean openLoop,
+            Translation2d targetTranslation,
+            BooleanSupplier targetingCondition
         ){
         return new FunctionalCommand(
             ()->{
                 drivetrain.resetPathController();
             }, 
             ()->{
+                boolean targetingReady = targetingCondition.getAsBoolean();
                 //shooter setState to odometry distance
                 Translation2d driveTranslation = drivetrain.getPose().getTranslation();
-                double distance = driveTranslation.getDistance(FieldUtil.kFieldCenter);
+                Translation2d translationToTarget = targetTranslation.minus(driveTranslation);
+                double distance = translationToTarget.getNorm();
 
                 Shooter.State targetShooterState = ShotMap.find(distance);
                 shooter.setState(targetShooterState);
                 //Drivetrain heading target to hub
-                Rotation2d angleToCenter = FieldUtil.getAngleToCenter(driveTranslation);
+                Rotation2d angleToTarget = drivetrain.getHeading();
+                if(targetingReady){
+                    angleToTarget = new Rotation2d(translationToTarget.getX(), translationToTarget.getY())
+                        .plus(new Rotation2d(Math.PI));
+                }
                 boolean driveAtGoal = drivetrain.drive(
                     vxMeters.getAsDouble(),
                     vyMeters.getAsDouble(),
-                    angleToCenter.plus(new Rotation2d(Math.PI)),
+                    angleToTarget,
                     openLoop
                 );
                 //Indexer feed when shooter && drivetrain ready
-                if(driveAtGoal && shooter.getState().withinTolerance(targetShooterState)){
-                    indexer.setVoltageFeed();
-                }
-                else{
-                    indexer.stop();
-                }
-            }, 
-            (interrupted)->{
-                shooter.stop();
-                indexer.stop();
-                drivetrain.stop();
-            },
-            ()->false,
-            drivetrain, shooter, indexer
-        );
-    }
-    public Command cameraShootOnly(
-        DoubleSupplier vxMeters, DoubleSupplier vyMeters, boolean openLoop
-        ){
-        return new FunctionalCommand(
-            ()->{
-                drivetrain.resetPathController();
-            }, 
-            ()->{
-                //shooter setState to odometry distance
-                double distance = vision.getDistance();
-
-                Shooter.State targetShooterState = ShotMap.find(distance);
-                shooter.setState(targetShooterState);
-
-                //Drivetrain heading target to hub
-                Rotation2d targetHeading = drivetrain.getPose().getRotation();
-                if(vision.getHasTarget()) targetHeading = targetHeading.plus(vision.getTargetYaw());
-
-                boolean driveAtGoal = drivetrain.drive(
-                    vxMeters.getAsDouble(),
-                    vyMeters.getAsDouble(),
-                    targetHeading,
-                    openLoop
-                );
-                //Indexer feed when shooter && drivetrain ready
-                if(driveAtGoal && shooter.getState().withinTolerance(targetShooterState) && vision.getHasTarget()){
+                if(driveAtGoal && shooter.withinTolerance() && targetingReady){
                     indexer.setVoltageFeed();
                 }
                 else{
@@ -316,12 +284,28 @@ public class Superstructure extends SubsystemBase {
         );
     }
     /**
+     * Automatically aims and fires at the high goal (odometry must be correct!).
+     * The velocity suppliers allow translation while aiming/firing.
+     * This command is perpetual and will stop the drivebase/indexer/shooter
+     * when interrupted.
+     * @param vxMeters X velocity supplier
+     * @param vyMeters Y velocity supplier
+     * @param openLoop If should not use velocity PID on swerve modules
+     * @param readyCondition Any boolean condition in addition to drivetrain angle
+     * and shooter state tolerance to decide when to begin feeding the indexer
+     */
+    public Command autoShoot(
+            DoubleSupplier vxMeters, DoubleSupplier vyMeters, boolean openLoop
+        ){
+        return autoShoot(vxMeters, vyMeters, openLoop, FieldUtil.kFieldCenter, ()->true);
+    }
+    /**
      * Automatically aims in place and fires at the high goal (odometry must be correct!).
      * This overload is intended for autonomous fire-in-place and uses closed-loop control.
      * This command will end after timeout seconds and stop the drivebase/indexer/shooter.
      */
     public Command otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(double timeout){
-        return otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(()->0, ()->0, false)
+        return autoShoot(()->0, ()->0, false)
             .withTimeout(timeout);
     }
 }
