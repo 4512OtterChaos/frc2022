@@ -37,10 +37,11 @@ public final class VisionUtil {
             double cameraHeightMeters,
             double targetHeightMeters,
             Rotation2d cameraPitch,
-            Rotation2d targetPitch
+            Rotation2d targetPitch,
+            Rotation2d targetYaw
         ) {
         return (targetHeightMeters - cameraHeightMeters)
-            / Math.tan(cameraPitch.getRadians() + targetPitch.getRadians());
+            / (Math.tan(cameraPitch.getRadians() + targetPitch.getRadians()) * Math.cos(targetYaw.getRadians()));
     }
     
     /**
@@ -90,7 +91,7 @@ public final class VisionUtil {
             estimateCameraToTarget(
                 estimateCameraToTargetTranslation(
                     calculateDistanceToTarget(
-                        cameraHeightMeters, targetHeightMeters, cameraPitch, targetPitch
+                        cameraHeightMeters, targetHeightMeters, cameraPitch, targetPitch, targetYaw
                     ),
                     targetYaw
                 ),

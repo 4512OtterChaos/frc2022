@@ -46,7 +46,8 @@ public class Vision extends SubsystemBase {
             kCameraHeight,
             FieldUtil.kVisionRingHeight,
             kCameraPitch,
-            getTargetPitch()
+            getTargetPitch(),
+            getTargetYaw()
         ) + (FieldUtil.kVisionRingDiameter / 2.0); // + vision ring -> hub center
     }
 
@@ -92,7 +93,7 @@ public class Vision extends SubsystemBase {
      * Target yaw reported by camera (lens -> target)
      */
     public Rotation2d getTargetYaw(){
-        return Rotation2d.fromDegrees(limelight.getTx());
+        return Rotation2d.fromDegrees(-limelight.getTx());
     }
     /**
      * Target yaw incorporating camera offset to get robot center -> target.
