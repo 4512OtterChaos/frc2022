@@ -13,7 +13,7 @@ public class IntakeConstants {
 
     public static final boolean kMotorInverted = true;
 
-    public static final double kVoltageIn = 4;
+    public static final double kVoltageIn = 2;
     public static final double kVoltageOut = -6;
 
     // Feedforward (simulation rn)
