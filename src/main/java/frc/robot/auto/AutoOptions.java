@@ -42,7 +42,7 @@ public class AutoOptions {
                 ) 
                 .deadlineWith(superstructure.intakeIndexCargo())
             )
-            .andThen(superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(3))
+            .andThen(superstructure.autoShoot(3))
             .andThen(superstructure.stop())
         );
 
@@ -84,7 +84,7 @@ public class AutoOptions {
                 .deadlineWith(superstructure.intakeIndexCargo())
                 .andThen(()->drivetrain.stop(), drivetrain)
             )
-            .andThen(superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(3))
+            .andThen(superstructure.autoShoot(3))
             .andThen(superstructure.stop())
         );
         autoOptions.addOption("FenderDoubleLeft",
@@ -141,7 +141,7 @@ public class AutoOptions {
             )
             
             .andThen(
-                superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(2.5)
+                superstructure.autoShoot(2.5)
             )
             
         );
@@ -156,7 +156,7 @@ public class AutoOptions {
             .deadlineWith(superstructure.intakeIndexCargo())
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(
-                superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(2.5)
+                superstructure.autoShoot(2.5)
             )
             .andThen(
                 autoFollowTrajectory(
@@ -170,7 +170,7 @@ public class AutoOptions {
             
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(
-                superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(2.5)
+                superstructure.autoShoot(2.5)
             )
             .andThen(
                 autoFollowTrajectory(
@@ -183,7 +183,7 @@ public class AutoOptions {
             
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(
-                superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(2.5)
+                superstructure.autoShoot(2.5)
             )
             
             
@@ -253,7 +253,7 @@ public class AutoOptions {
             )
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(
-                superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(2.5)
+                superstructure.autoShoot(2.5)
             )
             .andThen(
                 autoFollowTrajectory(
@@ -279,7 +279,7 @@ public class AutoOptions {
             )
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(
-                superstructure.otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(3)
+                superstructure.autoShoot(3)
             )
             .andThen(superstructure.stop())
 

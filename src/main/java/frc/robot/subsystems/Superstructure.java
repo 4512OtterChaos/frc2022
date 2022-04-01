@@ -304,7 +304,7 @@ public class Superstructure extends SubsystemBase {
      * This overload is intended for autonomous fire-in-place and uses closed-loop control.
      * This command will end after timeout seconds and stop the drivebase/indexer/shooter.
      */
-    public Command otterChaosShootsEpicShotMOMENTWEDONTHAVEAMENAKSKNJC(double timeout){
+    public Command autoShoot(double timeout){
         return autoShoot(()->0, ()->0, false)
             .withTimeout(timeout);
     }
