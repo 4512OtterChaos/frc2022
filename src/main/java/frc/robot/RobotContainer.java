@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.auto.AutoOptions;
 import frc.robot.common.OCXboxController;
+import frc.robot.simulation.CargoSim;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.climber.Climber;
 import frc.robot.subsystems.drivetrain.SwerveDrive;
@@ -26,7 +27,6 @@ import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.vision.Vision;
-import frc.robot.util.CargoSimulation;
 import frc.robot.util.FieldUtil;
 
 public class RobotContainer {
@@ -318,7 +318,7 @@ public class RobotContainer {
     //----- Simulation
 
     private final Field2d xzField = new Field2d();
-    private CargoSimulation cargoSimulation = new CargoSimulation(
+    private CargoSim cargoSimulation = new CargoSim(
         drivetrain::getPose,
         drivetrain::getChassisSpeeds,
         intake::getRPM,
