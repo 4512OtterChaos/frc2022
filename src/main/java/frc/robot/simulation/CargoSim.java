@@ -1,4 +1,4 @@
-package frc.robot.util;
+package frc.robot.simulation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,43 +8,28 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.util.function.BooleanConsumer;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
+import frc.robot.util.FieldUtil;
 
-public class CargoSimulation {
+import static frc.robot.simulation.CargoSimPhysics.*;
+
+public class CargoSim {
     
     private static class SimCargo {
-        private static final double dt = 0.02;
         private static int totalCargo = 0;
 
         private final int cargoNum;
-        public static final double kGravityAccel = -9.8;
-        public static final double kCargoMass = 0.27; // kg
-        public static final double kCargoRadius = Units.inchesToMeters(9.5 / 2.0);
-        public static final double kIntakeOffset = Units.inchesToMeters(20);
-        public static final double kIntakeHeight = Units.inchesToMeters(kCargoRadius);
-        public static final double kIntakeDistance = kCargoRadius + Units.inchesToMeters(3); // cargo closer than this will become intaked
-        public static final double kShooterHeight = Units.inchesToMeters(24);
-        
-        public static final double kBotSensorBeginDistance = Units.inchesToMeters(6);
-        public static final double kIndexBeginDistance = Units.inchesToMeters(11); // 25% intake, 75% index
-        public static final double kBotSensorEndDistance = Units.inchesToMeters(17);
-        public static final double kTopSensorBeginDistance = Units.inchesToMeters(29);
-        
-        public static final double kPathDistance = Math.hypot(kIntakeOffset, kShooterHeight);
-
-        public final Translation3d resetPos;
 
         // distinguish idle, intaking, and shooting
         enum State{
@@ -54,22 +39,23 @@ public class CargoSimulation {
         }
         private State state = State.IDLE;
 
+        public final Translation3d resetPos;
+        private Translation3d pos;
+
         // controlled variables
         private double currentPathDistance = 0;
-
-        // flight variables
-        private double flightVX = 0;
-        private double flightVY = 0;
-        private double flightVZ = 0;
-        private double flightSeconds = 0;
-
-        private Translation3d pos;
         // indexer sensors
         private boolean tripsBot = false;
         private boolean tripsTop = false;
 
+        // flight variables
+        private Translation3d flightVelocities = new Translation3d();
+        private Rotation2d spinDirection = new Rotation2d();
+        private double spinVel = 0;
+        private double groundSeconds = 0;
+
         public SimCargo(Translation2d resetPos){
-            this.resetPos = new Translation3d(resetPos.getX(), resetPos.getY(), kCargoRadius);
+            this.resetPos = new Translation3d(resetPos.getX(), resetPos.getY(), kRadius);
             pos = this.resetPos;
 
             totalCargo++;
@@ -80,20 +66,25 @@ public class CargoSimulation {
         public void setState(State state){this.state = state;}
         
         public void reset(){
-            setPos(resetPos);
+            pos = resetPos;
             state = State.IDLE;
             currentPathDistance = 0;
-            flightSeconds = 0;
+            groundSeconds = 0;
+            spinVel = 0;
+            spinDirection = new Rotation2d();
             tripsBot = false;
             tripsTop = false;
+            flightVelocities = new Translation3d();
         }
 
         public State getState(){return state;}
         public Translation3d getPos(){return pos;}
 
-        public void update(Pose2d robotPose, ChassisSpeeds robotSpeeds,
-            double intakeRPM, double indexerRPM,
-            Shooter.State shooterState
+        public void update(
+                double dt,
+                Pose2d robotPose, ChassisSpeeds robotSpeeds,
+                double intakeRPM, double indexerRPM,
+                Shooter.State shooterState
             ){
             Translation3d intakePos = new Translation3d(0, 0, kIntakeHeight).plusXY(
                 robotPose.transformBy(new Transform2d(
@@ -107,46 +98,123 @@ public class CargoSimulation {
 
             Rotation2d robotYaw = robotPose.getRotation();
 
-            double shotVelocity = shooterState.rpm / 60 * Units.inchesToMeters(4) * Math.PI * 0.55;
+            double shotVelocity = shooterState.rpm / 60 * Units.inchesToMeters(4) * Math.PI * 0.6;
+            double shotSpinVelocity = shooterState.rpm / 60 * Units.inchesToMeters(4) * Math.PI * 0.025;
             Rotation2d shotPitch = Rotation2d.fromDegrees(
                 MathUtil.interpolate(85, 40, shooterState.hoodMM/ShooterConstants.kServoLengthMM)
             );
             Rotation2d shotYaw = robotYaw.plus(new Rotation2d(Math.PI));
 
             if(state == State.FLIGHT){
-                flightSeconds += dt;
+                // z velocity after gravity
+                flightVelocities = flightVelocities.plusZ(
+                    kGravityAccel * dt
+                );
+                // air drag
+                double currentVelocity = flightVelocities.getDistance();
+                flightVelocities = flightVelocities.scale(
+                    calcAirDragVel(currentVelocity, dt) / currentVelocity
+                );
 
-                Translation3d flightVelocities = new Translation3d(flightVX, flightVY, flightVZ);
-                double flightVNorm = flightVelocities.getNorm();
-                Rotation2d flightYaw = new Rotation2d(flightVX, flightVY);
-                Rotation2d flightPitch = new Rotation2d(Math.hypot(flightVX, flightVY), flightVZ);
+                // next pos before collisions
+                Translation3d nextPos = pos.plus(flightVelocities.scale(dt));
+                Translation3d midPos = pos.plus(nextPos.minus(pos).scale(0.5));
 
                 // ground interaction
-                if(pos.getZ() <= kCargoRadius){
-                    pos = pos.plus(new Translation3d(0, 0, kCargoRadius - pos.getZ()));
-                    if(Math.abs(flightVZ) < 0.3) {
-                        flightVZ = 0;
-                        flightVX = Math.copySign(Math.abs(flightVX)*0.98 - 0.02, flightVX);
-                        flightVY = Math.copySign(Math.abs(flightVY)*0.98 - 0.02, flightVY);
-                    }
-                    else {
-                        flightVZ = Math.max(0, -flightVZ*0.75 - 0.02);
-                        flightVX *= 0.8;
-                        flightVY *= 0.8;
-                    }
+                if(nextPos.getZ() <= kRadius){
+                    flightVelocities = collideOnField(
+                        flightVelocities, spinDirection, spinVel,
+                        new Translation3d(0, 0, 1),
+                        kFloorBounceFactor,
+                        kFloorBounceVelFriction,
+                        kStaticFrictionAccel,
+                        dt
+                    );
+                    spinVel = 0;
+
+                    pos = pos.plusZ(kRadius - pos.getZ());
+                    nextPos = pos.plus(flightVelocities.scale(dt));
+                    midPos = pos.plus(nextPos.minus(pos).scale(0.5));
+                }
+                // upper hub interaction
+                // on walls
+                Rotation2d upperHubIncline = FieldUtil.kUpperHubIncline;
+                Translation3d upperGoalBottomVertex = new Translation3d(
+                    0,
+                    0,
+                    FieldUtil.kVisionRingHeight -
+                        (FieldUtil.kVisionRingDiameter/2.0 * Math.tan(
+                            Math.abs(upperHubIncline.unaryMinus().getRadians())
+                        ))
+                )
+                .plusXY(FieldUtil.kFieldCenter)
+                // adjust point so that angle seen matching the incline is when the cargo touches the wall
+                .plusZ(kRadius / Math.sin(Math.PI/2.0 - upperHubIncline.getRadians()));
+                Translation3d hubWallNormal = new Translation3d(
+                    1,
+                    midPos.minus(upperGoalBottomVertex).getYaw(),
+                    upperHubIncline.plus(new Rotation2d(Math.PI/2))
+                );
+                
+                double centerDist = FieldUtil.kFieldCenter.getDistance(pos.getXY());
+                // hit upper goal buttom
+                if(centerDist <= FieldUtil.kUpperGoalBottomDiameter/2.0 + kRadius &&
+                    nextPos.getZ() < FieldUtil.kUpperGoalBottomHeight + kRadius &&
+                    pos.getZ() >= FieldUtil.kUpperGoalBottomHeight + kRadius
+                ){
+                    flightVelocities = collideOnField(
+                        flightVelocities, spinDirection, spinVel,
+                        new Translation3d(0, 0, 1),
+                        kHubBounceFactor,
+                        kHubBounceVelFriction,
+                        kStaticFrictionAccel,
+                        dt
+                    );
+                    spinVel = 0;
+
+                    pos = pos.plusZ(FieldUtil.kUpperGoalBottomHeight + kRadius - pos.getZ());
+                    nextPos = pos.plus(flightVelocities.scale(dt));
+                    midPos = pos.plus(nextPos.minus(pos).scale(0.5));
+                }
+                
+                double distIntoHubWall = Math.copySign(
+                    pos.minus(upperGoalBottomVertex).proj(hubWallNormal).getDistance(),
+                    pos.minus(upperGoalBottomVertex).dot(hubWallNormal.unaryMinus())
+                );
+                double nextDistIntoHubWall = Math.copySign(
+                    nextPos.minus(upperGoalBottomVertex).proj(hubWallNormal).getDistance(),
+                    nextPos.minus(upperGoalBottomVertex).dot(hubWallNormal.unaryMinus())
+                );
+                // hit upper goal wall
+                if(nextPos.getZ() >= FieldUtil.kUpperGoalBottomHeight - kRadius/2 &&
+                    nextPos.getZ() <= FieldUtil.kVisionRingHeight + kRadius/2 &&
+                    nextDistIntoHubWall > 0 &&
+                    nextDistIntoHubWall > distIntoHubWall &&
+                    distIntoHubWall <= kRadius/2
+                ){
+                    flightVelocities = collideOnField(
+                        flightVelocities, spinDirection, spinVel,
+                        hubWallNormal,
+                        kHubBounceFactor,
+                        kHubBounceVelFriction,
+                        kStaticFrictionAccel,
+                        dt
+                    );
+                    spinVel = 0;
+
+                    pos = pos.plus(hubWallNormal.scale(distIntoHubWall / hubWallNormal.getDistance()));
+                    nextPos = pos.plus(flightVelocities.scale(dt));
+                    midPos = pos.plus(nextPos.minus(pos).scale(0.5));
                 }
 
-                // z velocity after gravity, air drag
-                double gravityForce = kCargoMass * kGravityAccel;
-                double zDragForce = calculateComponentDragForce(flightVZ);
-                flightVZ += (gravityForce + Math.copySign(zDragForce, -flightVZ)) / kCargoMass * dt;
-                // x/y air drag
-                flightVX += Math.copySign(calculateComponentDragForce(flightVX), -flightVX) / kCargoMass * dt;
-                flightVY += Math.copySign(calculateComponentDragForce(flightVY), -flightVY) / kCargoMass * dt;
+                if(cargoNum == 1) SmartDashboard.putString("cargo1/vel", flightVelocities.toString());
 
-                pos = pos.plus(new Translation3d(flightVX * dt, flightVY * dt, flightVZ * dt));
+                pos = nextPos;
 
-                if(flightSeconds > 5){
+                if(Math.abs(flightVelocities.getDistance()) <= kMinBounceVel) {
+                    groundSeconds += dt;
+                }
+                if(groundSeconds > 3){
                     reset();
                 }
             }
@@ -154,7 +222,7 @@ public class CargoSimulation {
                 // cargo movement in intake/indexer
                 double intakedDistance = intakeVelocity * dt;
                 double indexedDistance = indexVelocity * dt;
-                currentPathDistance += (currentPathDistance <= kIndexBeginDistance) ?
+                currentPathDistance += (currentPathDistance <= kIndexBeginDistance) ? 
                     intakedDistance
                     :
                     indexedDistance
@@ -162,8 +230,8 @@ public class CargoSimulation {
 
                 // sensors
                 if(currentPathDistance >= kBotSensorBeginDistance &&
-                    currentPathDistance <= kBotSensorEndDistance
-                    ) {
+                        currentPathDistance <= kBotSensorEndDistance
+                ) {
                     tripsBot = true;
                 }
                 else tripsBot = false;
@@ -171,53 +239,54 @@ public class CargoSimulation {
                 else tripsTop = false;
 
                 // transition to shot
-                if(currentPathDistance >= kPathDistance && shotVelocity > 0){
+                if(currentPathDistance >= kPathDistance && shotVelocity > 0.1){
                     setState(State.FLIGHT);
                     setPos(shooterPos);
+                    spinDirection = robotYaw;
+                    spinVel = shotSpinVelocity;
                     tripsBot = false;
                     tripsTop = false;
                     
-                    // initial translation velocities
-                    flightVX = shotVelocity * shotPitch.getCos() * shotYaw.getCos();
-                    flightVY = shotVelocity * shotPitch.getCos() * shotYaw.getSin();
-                    flightVZ = shotVelocity * shotPitch.getSin();
-                    flightVX += robotSpeeds.vxMetersPerSecond * robotYaw.getCos();
-                    flightVY += robotSpeeds.vxMetersPerSecond * robotYaw.getSin();
-                    flightVX += robotSpeeds.vyMetersPerSecond * -robotYaw.getSin();
-                    flightVY += robotSpeeds.vyMetersPerSecond * robotYaw.getCos();
+                    // cargo velocities based on shooter state
+                    flightVelocities = calcShotVelocities(
+                        shotVelocity,
+                        shotPitch,
+                        shotYaw,
+                        robotSpeeds
+                    );
                 }
-                else if(currentPathDistance < 0 && intakeVelocity < 0){
+                else if(currentPathDistance < 0 && intakeVelocity < -0.1){
                     setState(State.FLIGHT);
                     setPos(intakePos);
+                    spinDirection = robotYaw;
+                    spinVel = -intakeVelocity;
+                    tripsBot = false;
+                    tripsTop = false;
 
-                    // initial translation velocities
-                    flightVX = intakeVelocity * robotYaw.getCos();
-                    flightVY = intakeVelocity * robotYaw.getSin();
-                    flightVZ = 0;
-                    flightVX += robotSpeeds.vxMetersPerSecond * robotYaw.getCos();
-                    flightVY += robotSpeeds.vxMetersPerSecond * robotYaw.getSin();
-                    flightVX += robotSpeeds.vyMetersPerSecond * -robotYaw.getSin();
-                    flightVY += robotSpeeds.vyMetersPerSecond * robotYaw.getCos();
+                    // cargo velocities based on intake state
+                    flightVelocities = calcShotVelocities(
+                        -intakeVelocity,
+                        new Rotation2d(),
+                        shotYaw,
+                        robotSpeeds
+                    );
                 }
                 else{
                     setPos(intakePos.interpolate(shooterPos, currentPathDistance / kPathDistance));
                 }
             }
             else{
-                double dist = pos.getDistance(intakePos);
-                if(dist < kIntakeDistance){
+                Translation3d relativeCargo = pos.minus(intakePos).rotateByYaw(robotYaw.unaryMinus());
+                if(Math.abs(relativeCargo.getX()) < kIntakeXDist &&
+                    Math.abs(relativeCargo.getY()) < kIntakeYDist &&
+                    intakeVelocity > 0.1
+                ){
                     setState(State.CONTROLLED);
                     setPos(intakePos);
                 }
             }
-        }
 
-        public static double calculateComponentDragForce(double componentVel){
-            double dragArea = 2 * Math.PI * kCargoRadius*kCargoRadius;
-            double dragCoefficient = 0.2;
-            double airDensity = 1.2;
-
-            return 0.5 * dragCoefficient * airDensity * (componentVel*componentVel) * dragArea;
+            if(cargoNum == 1) SmartDashboard.putString("cargo1/pos", pos.toString());
         }
 
         public boolean getTripsBottom(){return tripsBot;}
@@ -226,7 +295,10 @@ public class CargoSimulation {
 
     //-----
 
+    private double lastTime = Timer.getFPGATimestamp();
+
     private List<SimCargo> cargoList = new ArrayList<>();
+
     private final Field2d xyField;
     private final Field2d xzField;
     
@@ -240,15 +312,15 @@ public class CargoSimulation {
     private final BooleanConsumer bottomSensorSim;
     private final BooleanConsumer topSensorSim;
 
-    public CargoSimulation(
-        Supplier<Pose2d> robotPose, Supplier<ChassisSpeeds> robotSpeeds,
-        DoubleSupplier intakeRPM, DoubleSupplier indexerRPM,
-        Supplier<Shooter.State> shooterState,
-        BooleanConsumer bottomSensorSim,
-        BooleanConsumer topSensorSim,
-        Field2d xyField,
-        Field2d xzField
-        ){
+    public CargoSim(
+            Supplier<Pose2d> robotPose, Supplier<ChassisSpeeds> robotSpeeds,
+            DoubleSupplier intakeRPM, DoubleSupplier indexerRPM,
+            Supplier<Shooter.State> shooterState,
+            BooleanConsumer bottomSensorSim,
+            BooleanConsumer topSensorSim,
+            Field2d xyField,
+            Field2d xzField
+    ){
         getRobotPose = robotPose;
         getRobotSpeeds = robotSpeeds;
         getIntakeRPM = intakeRPM;
@@ -304,6 +376,11 @@ public class CargoSimulation {
     }
 
     public void update(){
+
+        double now = Timer.getFPGATimestamp();
+        double dt = now - lastTime;
+        lastTime = now;
+
         Pose2d robotPose = getRobotPose.get();
         ChassisSpeeds robotSpeeds = getRobotSpeeds.get();
         double intakeRPM = getIntakeRPM.getAsDouble();
@@ -313,7 +390,7 @@ public class CargoSimulation {
         boolean bottomSensed = false;
         boolean topSensed = false;
         for(SimCargo cargo : cargoList){
-            cargo.update(robotPose, robotSpeeds, intakeRPM, indexerRPM, shooterState);
+            cargo.update(dt, robotPose, robotSpeeds, intakeRPM, indexerRPM, shooterState);
             // update indexer sensors
             
             bottomSensed = cargo.getTripsBottom() || bottomSensed;
@@ -329,12 +406,12 @@ public class CargoSimulation {
             .collect(Collectors.toList())
         );
         xyField.getObject("Intake").setPose(robotPose.transformBy(new Transform2d(
-            new Translation2d(SimCargo.kIntakeOffset, 0), new Rotation2d()
+            new Translation2d(kIntakeOffset, 0), new Rotation2d()
         )));
 
         xzField.setRobotPose(
             robotPose.getX(),
-            SimCargo.kShooterHeight/2.0,
+            kShooterHeight/2.0,
             robotPose.getRotation().getCos() > 0 ? new Rotation2d() : new Rotation2d(-1, 0)
         );
         xzField.getObject("Cargo").setPoses(
