@@ -10,6 +10,7 @@ import java.util.function.DoubleSupplier;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
@@ -46,12 +47,14 @@ public class Superstructure extends SubsystemBase {
     public void periodic() {
         // adjust odometry with vision data
         // without this, pose estimation is equivalent to normal odometry
+        /*
         if(vision.getHasTarget()){
             drivetrain.addVisionMeasurement(
                 vision.getRobotPose(drivetrain.getHeading()),
                 vision.getLatencySeconds()
             );
         }
+        */
     }
 
     public Command stopDrive(){
@@ -84,9 +87,12 @@ public class Superstructure extends SubsystemBase {
      * This command must be interrupted and will stop intaking once interrupted.
      */
     public Command intakeCargo(){
-        //return new InstantCommand(()->intake.setExtended(true), intake)
-        //.andThen(new WaitCommand(0.3))
-        return new InstantCommand()
+        return new InstantCommand(()->intake.setExtended(true), intake)
+        .andThen(new ConditionalCommand(
+            new InstantCommand(), 
+            new WaitCommand(0.3), 
+            intake::getExtended
+        ))
         .andThen(new StartEndCommand(
             ()->intake.setVoltage(4), 
             ()->intake.stop(),

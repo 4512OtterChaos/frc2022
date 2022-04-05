@@ -157,7 +157,7 @@ public class RobotContainer {
                 )
             );
         
-        //controller.bButton.whenPressed(()->intake.setExtended(false));
+        controller.bButton.whenPressed(()->intake.setExtended(false));
 
         controller.yButton.whenPressed(superstructure.fenderShootHigh())
         .whenReleased(()->{
@@ -299,6 +299,9 @@ public class RobotContainer {
         vision.log();
 
         field.setRobotPose(drivetrain.getPose());
+        field.getObject("vision pose").setPose(vision.getRobotPose(drivetrain.getHeading()));
+        field.getObject("Vision Target").setPose(drivetrain.getPose().transformBy(vision.getRobotToTarget(drivetrain.getHeading())));
+        
         field.getObject("Swerve Modules").setPoses(drivetrain.getModulePoses());
         Trajectory logTrajectory = drivetrain.getLogTrajectory();
         if(logTrajectory == null) logTrajectory = new Trajectory();
