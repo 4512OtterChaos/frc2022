@@ -20,8 +20,8 @@ public final class ShotMap {
             Units.metersToInches(FieldUtil.kCenterToFenderDist+SwerveConstants.kRobotWidth/2.0),
             new ShotMapEntry(2800, 0, 1.5)
         );
-        map.put(100.0, new ShotMapEntry(3000, 15, 1.5));
-        map.put(200.0, new ShotMapEntry(3500, 25, 1.75));
+        map.put(100.0, new ShotMapEntry(3000, 24, 1.5));
+        map.put(200.0, new ShotMapEntry(3500, 35, 1.75));
         map.put(300.0, new ShotMapEntry(5000, 50, 2)); 
     }
 

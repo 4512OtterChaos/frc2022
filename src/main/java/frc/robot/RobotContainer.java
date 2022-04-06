@@ -2,17 +2,22 @@ package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.auto.AutoOptions;
@@ -26,6 +31,7 @@ import frc.robot.subsystems.drivetrain.commands.TeleopDriveBasic;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.ShotMap;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.FieldUtil;
 
@@ -39,6 +45,7 @@ public class RobotContainer {
     private final Superstructure superstructure = new Superstructure(climber, drivetrain, indexer, intake, shooter, vision);
 
     private final OCXboxController driver = new OCXboxController(0);
+    private final Compressor compressor = new Compressor(PneumaticsModuleType.CTREPCM);
 
     private final AutoOptions autoOptions = new AutoOptions(climber, drivetrain, indexer, intake, shooter, superstructure);
 
@@ -52,7 +59,7 @@ public class RobotContainer {
         autoOptions.submit();
         SmartDashboard.putData("Field", field);
 
-        //LiveWindow.disableAllTelemetry();
+        LiveWindow.disableAllTelemetry();
     }
 
     public void periodic(){
@@ -188,14 +195,66 @@ public class RobotContainer {
         );
 
         // auto shoot high hub with only vision data
+        /*
         controller.leftBumper.whenPressed(
             superstructure.autoShoot(
                 ()->driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
                 ()->driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
                 true,
-                drivetrain.getPose().transformBy(vision.getRobotToTarget(drivetrain.getHeading())).getTranslation(),
+                //drivetrain.getPose().transformBy(vision.getRobotToTarget(drivetrain.getHeading())).getTranslation(),
+                drivetrain.getPose().plus(
+                    new Transform2d(vision.getRobotToTargetTranslation(), new Rotation2d())
+                ).getTranslation(),
                 ()->vision.getHasTarget()
             ).beforeStarting(()->controller.resetLimiters())
+        )
+        .whenReleased(
+            superstructure.stopDrive()
+            .alongWith(
+                superstructure.stopIndexer(),
+                superstructure.stopShooter()
+            )
+        );
+        */
+
+        controller.leftBumper.whenPressed(
+            new InstantCommand(controller::resetLimiters)
+            .andThen(new FunctionalCommand(
+                ()->{
+                    drivetrain.resetPathController();
+                }, 
+                ()->{
+                    Translation2d target = vision.getRobotToTargetTranslation();
+                    boolean hasTarget = vision.getHasTarget();
+                    double dist = target.getNorm();
+                    Rotation2d targetAngle = new Rotation2d(target.getX(), target.getY())
+                        .plus(new Rotation2d(Math.PI))
+                        .plus(drivetrain.getHeading());
+                    Shooter.State targetShooterState = ShotMap.find(dist);
+                    shooter.setState(targetShooterState);
+                    //Drivetrain heading target to hub
+                    boolean driveAtGoal = drivetrain.drive(
+                        driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
+                        driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
+                        targetAngle,
+                        true
+                    );
+                    //Indexer feed when shooter && drivetrain ready
+                    if(driveAtGoal && shooter.withinTolerance() && hasTarget){
+                        indexer.setVoltageFeed();
+                    }
+                    else{
+                        indexer.stop();
+                    }
+                }, 
+                (interrupted)->{
+                    shooter.stop();
+                    indexer.stop();
+                    drivetrain.stop();
+                },
+                ()->false,
+                drivetrain, shooter, indexer
+            ))
         )
         .whenReleased(
             superstructure.stopDrive()
@@ -247,15 +306,8 @@ public class RobotContainer {
             }, intake, indexer);
 
         shooter.setDefaultCommand(new RunCommand(()->{
-            double hoodDelta = 0;
-            if(controller.povRightButton.get()) hoodDelta += 1;
-            if(controller.povLeftButton.get()) hoodDelta -= 1;
-            shooter.setHood(shooter.getState().hoodMM + hoodDelta);
-
-            double rpmDelta = 0;
-            if(controller.povUpButton.get()) rpmDelta += 100;
-            if(controller.povDownButton.get()) rpmDelta -= 100;
-            shooter.setRPM(shooter.getTargetState().rpm + rpmDelta);
+            shooter.setHood(SmartDashboard.getNumber("Hood MM", 0));
+            shooter.setRPM(SmartDashboard.getNumber("Shooter Rpm", 0));
 
             //shooter.setShooterVoltage(controller.getLeftTriggerAxis()*12);
         }, shooter));
@@ -297,10 +349,18 @@ public class RobotContainer {
         shooter.log();
         climber.log();
         vision.log();
+        
+        SmartDashboard.putBoolean("Comp/Switch", compressor.getPressureSwitchValue());
 
         field.setRobotPose(drivetrain.getPose());
-        field.getObject("vision pose").setPose(vision.getRobotPose(drivetrain.getHeading()));
-        field.getObject("Vision Target").setPose(drivetrain.getPose().transformBy(vision.getRobotToTarget(drivetrain.getHeading())));
+        field.getObject("vision pose").setPose(new Pose2d(
+            FieldUtil.kFieldCenter.minus(vision.getRobotToTargetTranslation().rotateBy(drivetrain.getHeading())),
+            new Rotation2d()
+        ));
+        //field.getObject("Vision Target").setPose(drivetrain.getPose().transformBy(vision.getRobotToTarget(drivetrain.getHeading())));
+        field.getObject("Vision Target").setPose(drivetrain.getPose().plus(
+            new Transform2d(vision.getRobotToTargetTranslation(), new Rotation2d())
+        ));
         
         field.getObject("Swerve Modules").setPoses(drivetrain.getModulePoses());
         Trajectory logTrajectory = drivetrain.getLogTrajectory();

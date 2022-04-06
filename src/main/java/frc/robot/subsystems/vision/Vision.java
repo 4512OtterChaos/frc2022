@@ -100,14 +100,12 @@ public class Vision extends SubsystemBase {
      * Note this equivalent to the angle error between the robot's current camera yaw
      * and the yaw that would face the camera to target.
      */
-    public Rotation2d getRobotToTargetYaw(){
+    public Translation2d getRobotToTargetTranslation(){
         // get target relative to camera with offset corrected (robot center)
-        Translation2d relativeTarget = new Translation2d(
+        return new Translation2d(
             getCamDistanceMeters(),
             getTargetYaw()
-        ).minus(kCameraOffset.getTranslation());
-        // angle of the relative translation from the origin
-        return new Rotation2d(relativeTarget.getX(), relativeTarget.getY());
+        ).minus(kCameraOffset.getTranslation()).unaryMinus();
     }
     /**
      * Target pitch reported by camera (lens -> target)
