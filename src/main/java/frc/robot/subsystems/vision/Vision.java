@@ -19,6 +19,8 @@ import static frc.robot.subsystems.vision.VisionConstants.*;
 public class Vision extends SubsystemBase {
 
     private final Limelight limelight = new Limelight();
+    
+    private double lastLatency = 0;
 
     public Vision() {
     }
@@ -86,7 +88,11 @@ public class Vision extends SubsystemBase {
      * it is applicable.
      */
     public boolean getHasTarget(){
-        return limelight.getHasTarget();
+        double latency = getLatencySeconds();
+        // failsafe when NT is lost
+        boolean wasUpdated = latency != lastLatency;
+        lastLatency = latency;
+        return limelight.getHasTarget() && wasUpdated;
     }
 
     /**
