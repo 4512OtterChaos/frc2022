@@ -217,6 +217,9 @@ public class SwerveDrive extends SubsystemBase {
     public Pose2d getPose() {
         return poseEstimator.getEstimatedPosition();
     }
+    public Pose2d getPose(double secondsAgo) {
+        return poseEstimator.getEstimatedPosition(secondsAgo);
+    }
     /**
      * Swerve drive rotation on the field reported by odometry.
      */
@@ -238,9 +241,9 @@ public class SwerveDrive extends SubsystemBase {
             SwerveConstants.kMaxLinearSpeed);
         double angularPercent = Math.abs(speeds.omegaRadiansPerSecond) / SwerveConstants.kMaxAngularSpeed;
         return VecBuilder.fill(
-            MathUtil.interpolate(0.3, 1.2, linearPercent),
-            MathUtil.interpolate(0.3, 1.2, linearPercent),
-            Units.degreesToRadians(MathUtil.interpolate(20, 40, angularPercent))
+            MathUtil.interpolate(0.1, 1, linearPercent),
+            MathUtil.interpolate(0.1, 1, linearPercent),
+            Units.degreesToRadians(MathUtil.interpolate(5, 30, angularPercent))
         );
     }
 

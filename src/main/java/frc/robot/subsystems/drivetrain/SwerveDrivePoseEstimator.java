@@ -203,6 +203,17 @@ public class SwerveDrivePoseEstimator {
         return new Pose2d(
         m_observer.getXhat(0), m_observer.getXhat(1), new Rotation2d(m_observer.getXhat(2)));
     }
+    /**
+    * Gets the pose of the robot in the past as estimated by the Unscented Kalman Filter.
+    *
+    * @param secondsAgo Seconds to look in the past from the current time.
+    * @return The estimated robot pose in meters.
+    */
+    public Pose2d getEstimatedPosition(double secondsAgo) {
+        Pose2d bufferPose = m_poseBuffer.getSample(WPIUtilJNI.now() * 1.0e-6 - secondsAgo);
+        if(bufferPose == null) return getEstimatedPosition();
+        return bufferPose;
+    }
     
     /**
     * Add a vision measurement to the Unscented Kalman Filter. This will correct the odometry pose

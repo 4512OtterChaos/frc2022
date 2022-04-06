@@ -54,7 +54,7 @@ public class Superstructure extends SubsystemBase {
             drivetrain.addVisionMeasurement(
                 new Pose2d(
                     FieldUtil.kFieldCenter.minus(target.rotateBy(drivetrain.getHeading())),
-                    drivetrain.getHeading()
+                    drivetrain.getPose(vision.getLatencySeconds()).getRotation()
                 ),
                 vision.getLatencySeconds()
             );
