@@ -36,6 +36,8 @@ public class Indexer extends SubsystemBase {
 
     private final PIDController controller = new PIDController(kP, kI, kD);
     private double targetRPM = 0;
+    private boolean isManual = true;
+    private double targetVoltage = 0;
 
     private double lastPosition = 0;
     private double lastTime = Timer.getFPGATimestamp();
@@ -55,26 +57,35 @@ public class Indexer extends SubsystemBase {
     @Override
     public void periodic() {
         estimateRPM();
-        /*
-        double targetVoltage = controller.calculate(estimatedRPM, targetRPM);
-        motor.setVoltage(targetVoltage);
-        */
+        double adjustedVoltage = targetVoltage;
+
+        if(!isManual){
+            adjustedVoltage = controller.calculate(estimatedRPM, targetRPM) 
+            + kFF.calculate(Units.rotationsPerMinuteToRadiansPerSecond(targetRPM));
+        }
+        motor.setVoltage(adjustedVoltage);
+
+        
     }
     public void setBrakeOn(boolean is){
         motor.setIdleMode(is ? IdleMode.kBrake : IdleMode.kCoast);
     }
     public void stop(){
         setVoltage(0);
-        setRPM(0);
     }
     public void setVoltage(double voltage){
-        motor.setVoltage(voltage);
+        isManual = true;
+        targetVoltage = voltage;
     }
     public void setVoltageIn(){setVoltage(kVoltageIn);}
     public void setVoltageFeed(){setVoltage(kVoltageFeed);}
     public void setVoltageOut(){setVoltage(kVoltageOut);}
 
     public void setRPM(double rpm){
+        if(isManual){
+            controller.reset();
+        }
+        isManual = false;
         targetRPM = rpm;
     }
 
@@ -86,7 +97,6 @@ public class Indexer extends SubsystemBase {
         double time = Timer.getFPGATimestamp();
 
         estimatedRPM = (pos - lastPosition) / (time - lastTime) * 60;
-        estimatedRPM *= 24.0 / 36.0;
 
         lastPosition = pos;
         lastTime = time;

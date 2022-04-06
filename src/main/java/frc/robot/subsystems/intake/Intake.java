@@ -69,7 +69,7 @@ public class Intake extends SubsystemBase {
      * @return RPM of intake wheels
      */
     public double getRPM(){
-        return TalonUtil.velocityToRotations(motor.getSelectedSensorVelocity(), 2) * 60;
+        return TalonUtil.velocityToRotations(motor.getSelectedSensorVelocity(), 1) * 60;
     }
 
     public void log(){

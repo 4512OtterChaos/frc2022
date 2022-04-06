@@ -7,6 +7,7 @@ package frc.robot.subsystems;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -47,14 +48,18 @@ public class Superstructure extends SubsystemBase {
     public void periodic() {
         // adjust odometry with vision data
         // without this, pose estimation is equivalent to normal odometry
-        /*
+        
+        Translation2d target = vision.getRobotToTargetTranslation();
         if(vision.getHasTarget()){
             drivetrain.addVisionMeasurement(
-                vision.getRobotPose(drivetrain.getHeading()),
+                new Pose2d(
+                    FieldUtil.kFieldCenter.minus(target.rotateBy(drivetrain.getHeading())),
+                    drivetrain.getHeading()
+                ),
                 vision.getLatencySeconds()
             );
         }
-        */
+        
     }
 
     public Command stopDrive(){
@@ -94,7 +99,7 @@ public class Superstructure extends SubsystemBase {
             intake::getExtended
         ))
         .andThen(new StartEndCommand(
-            ()->intake.setVoltage(4), 
+            ()->intake.setVoltageIn(), 
             ()->intake.stop(),
             intake
         ));

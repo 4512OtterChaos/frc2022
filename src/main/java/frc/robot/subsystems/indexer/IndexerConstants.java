@@ -9,15 +9,15 @@ public class IndexerConstants {
     
     public static final boolean kMotorInverted = true;
 
-    public static final double kVoltageIn = 4; // intake/index
-    public static final double kVoltageFeed = 6; // feed shooter
-    public static final double kVoltageOut = -8;
+    public static final double kVoltageIn = 3; // intake/index
+    public static final double kVoltageFeed = 5; // feed shooter
+    public static final double kVoltageOut = -5;
 
     // Feedforward loaded with cargo (simulation rn)
     public static final SimpleMotorFeedforward kFF = new SimpleMotorFeedforward(
-        0.75, // Voltage to break static friction
-        0.05, // Volts per radian per second
-        0.01 // Volts per radian per second squared
+        0.28, // Voltage to break static friction
+        0.02, // Volts per radian per second
+        0.005 // Volts per radian per second squared
     );
     
     // Current limits
@@ -29,7 +29,7 @@ public class IndexerConstants {
     public static final int kVoltageMeasurementSamples = 32;
     public static final int kCANTimeout = 100;
 
-    public static final double kP = 0.1;
+    public static final double kP = 0.01;
     public static final double kI = 0;
     public static final double kD = 0;
 }

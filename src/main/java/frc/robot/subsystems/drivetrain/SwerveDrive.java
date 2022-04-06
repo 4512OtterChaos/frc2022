@@ -238,9 +238,9 @@ public class SwerveDrive extends SubsystemBase {
             SwerveConstants.kMaxLinearSpeed);
         double angularPercent = Math.abs(speeds.omegaRadiansPerSecond) / SwerveConstants.kMaxAngularSpeed;
         return VecBuilder.fill(
-            MathUtil.interpolate(0.6, 1.5, linearPercent),
-            MathUtil.interpolate(0.6, 1.5, linearPercent),
-            Units.degreesToRadians(MathUtil.interpolate(30, 60, angularPercent))
+            MathUtil.interpolate(0.3, 1.2, linearPercent),
+            MathUtil.interpolate(0.3, 1.2, linearPercent),
+            Units.degreesToRadians(MathUtil.interpolate(20, 40, angularPercent))
         );
     }
 
@@ -290,6 +290,7 @@ public class SwerveDrive extends SubsystemBase {
         SmartDashboard.putNumber("Drive/X", pose.getX());
         SmartDashboard.putNumber("Drive/Y", pose.getY());
         ChassisSpeeds chassisSpeeds = getChassisSpeeds();
+        SmartDashboard.putNumber("Drive/Target Heading", Math.toDegrees(thetaController.getSetpoint().position));
         SmartDashboard.putNumber("Drive/VX", chassisSpeeds.vxMetersPerSecond);
         SmartDashboard.putNumber("Drive/VY", chassisSpeeds.vyMetersPerSecond);
         SmartDashboard.putNumber("Drive/Omega Degrees", Units.radiansToDegrees(chassisSpeeds.omegaRadiansPerSecond));
