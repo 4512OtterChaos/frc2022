@@ -132,6 +132,7 @@ public class Superstructure extends SubsystemBase {
     public Command dumpCargo(){
         return new StartEndCommand(
             ()->{
+                intake.setExtended(true);
                 intake.setVoltageOut();
                 indexer.setVoltageOut();
             },

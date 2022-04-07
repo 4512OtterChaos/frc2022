@@ -135,6 +135,9 @@ public class Shooter extends SubsystemBase {
         public State(){
             this(0, 0);
         }
+        public State plus(State other){
+            return new State(this.rpm+other.rpm, this.hoodMM+other.hoodMM);
+        }
         public boolean withinTolerance(State other){
             return Math.abs(other.rpm - rpm) <= kToleranceRPM && Math.abs(other.hoodMM - hoodMM) < kServoToleranceMM;
         }

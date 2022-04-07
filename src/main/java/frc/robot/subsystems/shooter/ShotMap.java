@@ -12,7 +12,7 @@ public final class ShotMap {
 
     private static final TreeMap<Double, ShotMapEntry> map = new TreeMap<>();
     public static final Shooter.State kFenderLow = new Shooter.State(1500, 25);
-
+    private static double rpmOffset = 0;
     static {
         // high goal states at distance in inches
         map.put(
@@ -36,7 +36,7 @@ public final class ShotMap {
         double closeToTarget = distanceInches - closeDist;
 
         if(closeToFar == 0) return map.get(closeDist);
-        return map.get(closeDist).interpolate(map.get(farDist), closeToTarget / closeToFar);
+        return map.get(closeDist).interpolate(map.get(farDist), closeToTarget / closeToFar).plus(new ShotMapEntry(rpmOffset, 0, 0));
     }
     /**
      * Finds shooter state appropriate for shooting into the high goal at the given distance
@@ -54,6 +54,9 @@ public final class ShotMap {
     public static double findToF(double distanceMeters){
         return findEntry(distanceMeters).tof;
     }
+    public static void setRPMOffset(double rpm){
+        rpmOffset = rpm;
+    }
 
     private static class ShotMapEntry implements Interpolatable<ShotMapEntry>{
         public final Shooter.State state;
@@ -67,6 +70,10 @@ public final class ShotMap {
         public ShotMapEntry(double rpm, double hoodMM, double tof){
             this.state = new Shooter.State(rpm, hoodMM);
             this.tof = tof;
+        }
+        public ShotMapEntry plus(ShotMapEntry other){
+            Shooter.State newState = other.state.plus(state);
+            return new ShotMapEntry(newState.rpm, newState.hoodMM,tof);
         }
 
         @Override
