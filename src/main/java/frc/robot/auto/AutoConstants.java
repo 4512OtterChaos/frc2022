@@ -25,7 +25,16 @@ public class AutoConstants {
     public static final double kThetaVelocityTolerance = Units.degreesToRadians(10);
 
     // packaged configs for path following
-    public static final TrajectoryConfig kMaxSpeedConfig = new TrajectoryConfig(kMaxLinearSpeed, kMaxLinearAcceleration);
-    public static final TrajectoryConfig kMediumSpeedConfig = new TrajectoryConfig(0.7*kMaxLinearSpeed, 0.65*kMaxLinearAcceleration);
-    public static final TrajectoryConfig kSlowSpeedConfig = new TrajectoryConfig(0.4*kMaxLinearSpeed, 0.4*kMaxLinearAcceleration);
+    public static final TrajectoryConfig kFastSpeedConfig = new TrajectoryConfig(
+        Units.feetToMeters(11), 
+        Units.feetToMeters(14)
+    );
+    public static final TrajectoryConfig kMediumSpeedConfig = new TrajectoryConfig(
+        Units.feetToMeters(9), 
+        Units.feetToMeters(11)
+    );
+    public static final TrajectoryConfig kSlowSpeedConfig = new TrajectoryConfig(
+        Units.feetToMeters(6), 
+        Units.feetToMeters(6)
+    );
 }

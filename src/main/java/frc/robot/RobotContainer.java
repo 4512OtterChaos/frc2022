@@ -63,6 +63,7 @@ public class RobotContainer {
     }
 
     public void periodic(){
+        ShotMap.setRPMOffset(SmartDashboard.getNumber("Operator/RPM Offset", 0));
     }
 
     public Command getAutoCommand(){
@@ -267,12 +268,12 @@ public class RobotContainer {
         // estimate hood angle continuously before shooting
         shooter.setDefaultCommand(new RunCommand(()->{
             shooter.setHood(
-                /*ShotMap.find(
+                ShotMap.find(
                     drivetrain.getPose().getTranslation().getDistance(FieldUtil.kFieldCenter)
                     
                 ).hoodMM
-                */
-                0
+                
+                //0
             );
         }, shooter));
     }

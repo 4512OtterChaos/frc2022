@@ -32,7 +32,7 @@ public class AutoOptions {
         );
         
         autoOptions.addOption("TripleRight", 
-            superstructure.fenderShootHigh(2.5)
+            superstructure.fenderShootHigh(1.5)
             .andThen(
                 autoFollowTrajectory(
                     drivetrain, 
@@ -69,24 +69,47 @@ public class AutoOptions {
         );
         
         autoOptions.addOption("DoubleLeft",
-            superstructure.fenderShootHigh(2.5)
-            .andThen(()->{
-                shooter.stop();
-                indexer.stop();
-            }, indexer, shooter)
-            .andThen(
-                autoFollowTrajectory(
-                    drivetrain, 
-                    "DoubleLeft1", 
-                    AutoConstants.kMediumSpeedConfig,
-                    true
-                ) 
-                .deadlineWith(superstructure.intakeIndexCargo())
-                .andThen(()->drivetrain.stop(), drivetrain)
-            )
+            autoFollowTrajectory(
+                drivetrain, 
+                "DoubleLeft1", 
+                AutoConstants.kMediumSpeedConfig,
+                true
+            ) 
+            .deadlineWith(superstructure.intakeIndexCargo())
+            .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(superstructure.autoShoot(3))
             .andThen(superstructure.stop())
         );
+
+        autoOptions.addOption("DoubleLeft but troll", 
+            autoFollowTrajectory(
+                drivetrain, 
+                "DoubleLeft1", 
+                AutoConstants.kMediumSpeedConfig,
+                true
+            ) 
+            .deadlineWith(superstructure.intakeIndexCargo())
+            .andThen(()->drivetrain.stop(), drivetrain)
+            .andThen(superstructure.autoShoot(2.5))
+            .andThen(
+                autoFollowTrajectory(
+                    drivetrain, 
+                    "DoubleLeftTroll2", 
+                    AutoConstants.kMediumSpeedConfig, 
+                    false
+                )
+                .deadlineWith(superstructure.intakeIndexCargo())
+            )
+            
+            .andThen(()->drivetrain.stop(), drivetrain)
+            .andThen(
+                superstructure.dumpCargo()
+                .withTimeout(3)
+            )
+
+            
+        );
+
         autoOptions.addOption("FenderDoubleLeft",
             superstructure.fenderShootHigh(2.5)
             .andThen(()->{
@@ -104,7 +127,7 @@ public class AutoOptions {
             )
             .andThen(autoFollowTrajectory(
                 drivetrain, 
-                "DoubleLeft2", 
+                "FenderDoubleLeft2", 
                 AutoConstants.kMediumSpeedConfig,
                 false
                 )
@@ -116,6 +139,7 @@ public class AutoOptions {
             .andThen(superstructure.stop())
            
         );
+        /*
         autoOptions.addOption("-1auto",
             new WaitCommand(2)
             .deadlineWith(superstructure.dumpCargo())
@@ -145,7 +169,8 @@ public class AutoOptions {
             )
             
         );
-        
+        */
+        /*
         autoOptions.addOption("QuintupleLeft", 
             autoFollowTrajectory(
                 drivetrain, 
@@ -188,6 +213,8 @@ public class AutoOptions {
             
             
         );
+        */
+        /*
         autoOptions.addOption("FenderQuintupleRight",
             superstructure.fenderShootHigh(1.75)
             .andThen(()->{
@@ -225,7 +252,7 @@ public class AutoOptions {
                 autoFollowTrajectory(
                     drivetrain, 
                     "QuintupleRightFender3", 
-                    AutoConstants.kMaxSpeedConfig,
+                    AutoConstants.kFastSpeedConfig,
                     false
                 ) 
             )
@@ -236,6 +263,7 @@ public class AutoOptions {
             .andThen(superstructure.stop())
 
         );
+        */
         autoOptions.addOption("QuintupleRight",
             superstructure.fenderShootHigh(1.5)
             .andThen(()->{
@@ -245,7 +273,7 @@ public class AutoOptions {
             .andThen(
                 autoFollowTrajectory(
                     drivetrain, 
-                    "QuintetRight1", 
+                    "TripleRight1", 
                     AutoConstants.kMediumSpeedConfig,
                     true
                 ) 
@@ -273,7 +301,7 @@ public class AutoOptions {
                 autoFollowTrajectory(
                     drivetrain, 
                     "QuintetRight3", 
-                    AutoConstants.kMediumSpeedConfig,
+                    AutoConstants.kFastSpeedConfig,
                     false
                 ) 
             )
@@ -302,13 +330,6 @@ public class AutoOptions {
                 new WaitCommand(2)
                 .deadlineWith(new RunCommand(()->drivetrain.drive(2, 0, 0, false), drivetrain))
             )
-            .andThen(()->drivetrain.stop(), drivetrain)
-        );
-        autoOptions.addOption("Shoot then move", 
-            superstructure.fenderShootHigh(3)
-            .andThen(
-                autoFollowTrajectory(drivetrain, "DoubleLeft1", AutoConstants.kMediumSpeedConfig, true)
-                )
             .andThen(()->drivetrain.stop(), drivetrain)
         );
         
