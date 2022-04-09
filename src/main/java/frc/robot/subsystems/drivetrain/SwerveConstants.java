@@ -38,9 +38,9 @@ public class SwerveConstants {
 
     public enum Module {
         FL(1, 0, 1, 0, 96.855, kTrackLength/2, kTrackWidth/2), // Front left
-        FR(2, 2, 3, 1, -118.565, kTrackLength/2, -kTrackWidth/2),
-        BL(3, 4, 5, 2, -122.344, -kTrackLength/2, kTrackWidth/2),
-        BR(4, 6, 7, 3, 175.078, -kTrackLength/2, -kTrackWidth/2);
+        FR(2, 2, 3, 1, -118.565, kTrackLength/2, -kTrackWidth/2), // Front Right
+        BL(3, 4, 5, 2, -122.344, -kTrackLength/2, kTrackWidth/2), // Back Left
+        BR(4, 6, 7, 3, 175.078, -kTrackLength/2, -kTrackWidth/2); // Back Right
 
         public final int moduleNum;
         public final int driveMotorID;

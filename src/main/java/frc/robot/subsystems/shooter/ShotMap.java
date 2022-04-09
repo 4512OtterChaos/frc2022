@@ -18,11 +18,11 @@ public final class ShotMap {
         map.put(
             // fender high shot
             Units.metersToInches(FieldUtil.kCenterToFenderDist+SwerveConstants.kRobotWidth/2.0),
-            new ShotMapEntry(2800, 0, 1.5)
+            new ShotMapEntry(2900, 0, 1.5)
         );
-        map.put(100.0, new ShotMapEntry(3000, 24, 1.5));
-        map.put(200.0, new ShotMapEntry(3500, 35, 1.75));
-        map.put(300.0, new ShotMapEntry(5000, 50, 2)); 
+        map.put(100.0, new ShotMapEntry(2600, 23, 1.5));
+        map.put(200.0, new ShotMapEntry(3400, 41, 1.75));
+        map.put(300.0, new ShotMapEntry(4800, 53, 2)); 
     }
 
     private static ShotMapEntry findEntry(double distanceMeters){

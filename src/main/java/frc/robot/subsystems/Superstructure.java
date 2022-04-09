@@ -50,7 +50,8 @@ public class Superstructure extends SubsystemBase {
         // without this, pose estimation is equivalent to normal odometry
         
         Translation2d target = vision.getRobotToTargetTranslation();
-        if(vision.getHasTarget()){
+        boolean visionOnEdge = Math.abs(vision.getTargetYaw().getDegrees()) > 25;
+        if(vision.getHasTarget() && !visionOnEdge){
             drivetrain.addVisionMeasurement(
                 new Pose2d(
                     FieldUtil.kFieldCenter.minus(target.rotateBy(drivetrain.getHeading())),

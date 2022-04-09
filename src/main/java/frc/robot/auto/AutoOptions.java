@@ -24,6 +24,7 @@ public class AutoOptions {
     
     // list of choosable commands that decides what is run in auto
     private SendableChooser<Command> autoOptions = new SendableChooser<>();
+    private PathPlannerTrajectory tripleRightTrajectory = PathPlanner.loadPath("TripleRight1", 1, 1);
 
     public AutoOptions(Climber climber, SwerveDrive drivetrain, Indexer indexer, Intake intake, Shooter shooter, Superstructure superstructure){
 
@@ -32,7 +33,12 @@ public class AutoOptions {
         );
         
         autoOptions.addOption("TripleRight", 
-            superstructure.fenderShootHigh(1.5)
+            superstructure.autoShoot(1.5)
+            .beforeStarting(()->{
+                drivetrain.resetOdometry(new Pose2d(
+                    tripleRightTrajectory.getInitialPose().getTranslation(), 
+                    tripleRightTrajectory.getInitialState().holonomicRotation));
+            })
             .andThen(
                 autoFollowTrajectory(
                     drivetrain, 
@@ -69,28 +75,46 @@ public class AutoOptions {
         );
         
         autoOptions.addOption("DoubleLeft",
-            autoFollowTrajectory(
-                drivetrain, 
-                "DoubleLeft1", 
-                AutoConstants.kMediumSpeedConfig,
-                true
-            ) 
+            new InstantCommand(
+                ()->intake.setExtended(true), 
+                intake
+                
+                )
+            .andThen(new WaitCommand(2))
+            .andThen(
+                autoFollowTrajectory(
+                    drivetrain, 
+                    "DoubleLeft1", 
+                    AutoConstants.kSlowSpeedConfig,
+                    true
+                ) 
             .deadlineWith(superstructure.intakeIndexCargo())
+            )
+            
+            
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(superstructure.autoShoot(3))
             .andThen(superstructure.stop())
         );
 
         autoOptions.addOption("DoubleLeft but troll", 
-            autoFollowTrajectory(
-                drivetrain, 
-                "DoubleLeft1", 
-                AutoConstants.kMediumSpeedConfig,
-                true
-            ) 
-            .deadlineWith(superstructure.intakeIndexCargo())
+            new InstantCommand(
+                ()->intake.setExtended(true), 
+                intake
+                
+                )
+            .andThen(new WaitCommand(2))    
+            .andThen(
+                autoFollowTrajectory(
+                    drivetrain, 
+                    "DoubleLeft1", 
+                    AutoConstants.kSlowSpeedConfig,
+                    true
+                ) 
+                .deadlineWith(superstructure.intakeIndexCargo())
+            )
             .andThen(()->drivetrain.stop(), drivetrain)
-            .andThen(superstructure.autoShoot(2.5))
+            .andThen(superstructure.autoShoot(4))
             .andThen(
                 autoFollowTrajectory(
                     drivetrain, 
@@ -265,7 +289,18 @@ public class AutoOptions {
         );
         */
         autoOptions.addOption("QuintupleRight",
-            superstructure.fenderShootHigh(1.5)
+            
+            superstructure.autoShoot(2)
+            .beforeStarting(()->{
+                drivetrain.resetOdometry(new Pose2d(
+                    tripleRightTrajectory.getInitialPose().getTranslation(), 
+                    tripleRightTrajectory.getInitialState().holonomicRotation));
+            })
+            .alongWith(
+                new InstantCommand(()-> intake.setExtended(true), 
+                    intake
+                )
+            )
             .andThen(()->{
                 shooter.stop();
                 indexer.stop();
@@ -275,7 +310,7 @@ public class AutoOptions {
                     drivetrain, 
                     "TripleRight1", 
                     AutoConstants.kMediumSpeedConfig,
-                    true
+                    false
                 ) 
                 .deadlineWith(superstructure.intakeIndexCargo())
             )
@@ -294,7 +329,7 @@ public class AutoOptions {
             )
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(
-                new WaitCommand(0.75)
+                new WaitCommand(0.5)
                 .deadlineWith(superstructure.intakeIndexCargo())
             )
             .andThen(
@@ -321,7 +356,7 @@ public class AutoOptions {
         );
 
         autoOptions.addOption("ShootThenTaxiLastResort",
-            superstructure.fenderShootHigh(2)
+            superstructure.autoShoot(2)
             .andThen(()->{
                 shooter.stop();
                 indexer.stop();

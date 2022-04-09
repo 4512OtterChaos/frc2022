@@ -18,7 +18,7 @@ public class Limelight {
 
     private NetworkTable visionTable;
 
-    private static final int averageSampleSize = 3;
+    private static final int averageSampleSize = 4;
     private LinearFilter txFilter = LinearFilter.movingAverage(averageSampleSize);
     private LinearFilter tyFilter = LinearFilter.movingAverage(averageSampleSize);
 
@@ -101,6 +101,11 @@ public class Limelight {
      */
     public double getFilteredTy(){
         return tyFilter.calculate(getTy());
+    }
+
+    public void resetFilter(){
+        txFilter.reset();
+        tyFilter.reset();
     }
 }
 

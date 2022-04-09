@@ -32,6 +32,7 @@ import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShotMap;
+import frc.robot.subsystems.vision.Limelight;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.FieldUtil;
 
@@ -60,10 +61,12 @@ public class RobotContainer {
         SmartDashboard.putData("Field", field);
 
         LiveWindow.disableAllTelemetry();
+        SmartDashboard.putNumber("Shooter/RPM Offset", 0);
     }
 
     public void periodic(){
-        ShotMap.setRPMOffset(SmartDashboard.getNumber("Operator/RPM Offset", 0));
+        
+        ShotMap.setRPMOffset(SmartDashboard.getNumber("Shooter/RPM Offset", 0));
     }
 
     public Command getAutoCommand(){
@@ -76,6 +79,7 @@ public class RobotContainer {
         indexer.stop();
         shooter.stop();
         climber.stop();
+        shooter.setHood(0);
     }
 
     public void setAllBrake(boolean is){
@@ -184,7 +188,7 @@ public class RobotContainer {
             superstructure.autoShoot(
                 ()->driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
                 ()->driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
-                true
+                false
             ).beforeStarting(()->controller.resetLimiters())
         )
         .whenReleased(
@@ -223,9 +227,12 @@ public class RobotContainer {
             .andThen(new FunctionalCommand(
                 ()->{
                     drivetrain.resetPathController();
+                    vision.resetFilter();
                 }, 
                 ()->{
-                    Translation2d target = vision.getRobotToTargetTranslation();
+                    Translation2d target = vision.getFilteredRobotToTargetTranslation().plus(
+                        drivetrain.getPose().minus(drivetrain.getPose(vision.getLatencySeconds())).getTranslation()
+                    );
                     boolean hasTarget = vision.getHasTarget();
                     double dist = target.getNorm();
                     Rotation2d targetAngle = new Rotation2d(target.getX(), target.getY())

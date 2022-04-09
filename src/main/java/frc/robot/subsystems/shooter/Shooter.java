@@ -65,6 +65,7 @@ public class Shooter extends SubsystemBase {
         if(rightMotor.hasResetOccurred() || leftMotor.hasResetOccurred()){
             setupFlywheel(false);
         }
+        
     }
 
     public void setRPM(double rpm){

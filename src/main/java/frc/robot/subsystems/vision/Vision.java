@@ -92,7 +92,7 @@ public class Vision extends SubsystemBase {
         // failsafe when NT is lost
         boolean wasUpdated = latency != lastLatency;
         lastLatency = latency;
-        return limelight.getHasTarget() && wasUpdated;
+        return limelight.getHasTarget();
     }
 
     /**
@@ -113,6 +113,20 @@ public class Vision extends SubsystemBase {
             getTargetYaw()
         ).minus(kCameraOffset.getTranslation()).unaryMinus();
     }
+
+    public Translation2d getFilteredRobotToTargetTranslation(){
+        // get target relative to camera with offset corrected (robot center)
+        return new Translation2d(
+            VisionUtil.calculateDistanceToTarget(
+            kCameraHeight,
+            FieldUtil.kVisionRingHeight,
+            kCameraPitch,
+            Rotation2d.fromDegrees(limelight.getFilteredTy()),
+            Rotation2d.fromDegrees(-limelight.getFilteredTx())
+        ) + (FieldUtil.kVisionRingDiameter / 2.0),
+            Rotation2d.fromDegrees(-limelight.getFilteredTx())
+        ).minus(kCameraOffset.getTranslation()).unaryMinus();
+    }
     /**
      * Target pitch reported by camera (lens -> target)
      */
@@ -123,7 +137,9 @@ public class Vision extends SubsystemBase {
     public double getLatencySeconds(){
         return limelight.getLatencySeconds();
     }
-
+    public void resetFilter(){
+        limelight.resetFilter();
+    }
     public void log(){
         SmartDashboard.putNumber("Vision/YawDegrees", getTargetYaw().getDegrees());
         SmartDashboard.putNumber("Vision/Distance", getCamDistanceMeters());
