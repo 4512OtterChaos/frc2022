@@ -247,6 +247,9 @@ public class SwerveDrive extends SubsystemBase {
         );
     }
 
+    public double getLinearVelocity(){
+        return Math.hypot(getChassisSpeeds().vxMetersPerSecond, getChassisSpeeds().vyMetersPerSecond);
+    }
     public double getMaxLinearVelocityMeters(){
         return SwerveConstants.kMaxLinearSpeed;
     }

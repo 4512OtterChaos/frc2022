@@ -10,6 +10,7 @@ import java.util.function.DoubleSupplier;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
@@ -21,6 +22,7 @@ import frc.robot.subsystems.climber.Climber;
 import frc.robot.subsystems.drivetrain.SwerveDrive;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShotMap;
 import frc.robot.subsystems.vision.Vision;
@@ -105,6 +107,19 @@ public class Superstructure extends SubsystemBase {
             intake
         ));
     }
+    public Command intakeCargo(DoubleSupplier linearVelocity){
+        return new InstantCommand(()->intake.setExtended(true), intake)
+        .andThen(new ConditionalCommand(
+            new InstantCommand(), 
+            new WaitCommand(0.3), 
+            intake::getExtended
+        ))
+        .andThen(new StartEndCommand(
+            ()->intake.setVoltage(IntakeConstants.kVoltageIn+Math.abs(linearVelocity.getAsDouble()*2)), 
+            ()->intake.stop(),
+            intake
+        ));
+    }
 
     /**
      * Perpetually reads indexer sensors and automatically indexes incoming cargo.
@@ -177,6 +192,11 @@ public class Superstructure extends SubsystemBase {
      */
     public Command intakeIndexCargo(){
         return intakeCargo()
+            .alongWith(indexCargo());
+    }
+
+    public Command intakeIndexCargo(DoubleSupplier linearVelocity){
+        return intakeCargo(linearVelocity)
             .alongWith(indexCargo());
     }
 

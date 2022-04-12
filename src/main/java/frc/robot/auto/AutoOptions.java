@@ -312,7 +312,7 @@ public class AutoOptions {
                     AutoConstants.kMediumSpeedConfig,
                     false
                 ) 
-                .deadlineWith(superstructure.intakeIndexCargo())
+                .deadlineWith(superstructure.intakeIndexCargo(drivetrain::getLinearVelocity))
             )
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(
@@ -325,12 +325,12 @@ public class AutoOptions {
                     AutoConstants.kMediumSpeedConfig,
                     false
                 )
-                .deadlineWith(superstructure.intakeIndexCargo())
+                .deadlineWith(superstructure.intakeIndexCargo(drivetrain::getLinearVelocity))
             )
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(
                 new WaitCommand(0.5)
-                .deadlineWith(superstructure.intakeIndexCargo())
+                .deadlineWith(superstructure.intakeIndexCargo(drivetrain::getLinearVelocity))
             )
             .andThen(
                 autoFollowTrajectory(
