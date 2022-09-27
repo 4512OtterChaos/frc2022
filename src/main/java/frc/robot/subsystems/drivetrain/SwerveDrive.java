@@ -8,7 +8,6 @@ import com.ctre.phoenix.sensors.WPI_Pigeon2;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
-import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -128,13 +127,14 @@ public class SwerveDrive extends SubsystemBase {
     public boolean drive(double vxMeters, double vyMeters, Rotation2d targetRotation, boolean openLoop){
         // rotation speed
         double rotationRadians = getPose().getRotation().getRadians();
-        double pidOutput = thetaController.calculate(rotationRadians, targetRotation.getRadians());
+        double thetaFeedback = thetaController.calculate(rotationRadians, targetRotation.getRadians());
+        double thetaFF = thetaController.getSetpoint().velocity;
 
         // + translation speed
         ChassisSpeeds targetChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
             vxMeters,
             vyMeters,
-            pidOutput,
+            thetaFF + thetaFeedback,
             getHeading()
         );
 
