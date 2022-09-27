@@ -44,7 +44,7 @@ public class AutoOptions {
                     drivetrain, 
                     "TripleRight1", 
                     AutoConstants.kMediumSpeedConfig,
-                    true
+                    false
                 ) 
                 .deadlineWith(superstructure.intakeIndexCargo())
             )
