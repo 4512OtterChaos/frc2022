@@ -7,10 +7,10 @@ public class ClimberConstants {
     public static final int kRightMotorID = 13;
     public static final boolean kMotorInverted = false;
 
-    public static final double kTopHeightRotations = 140; // motor rotations
+    public static final double kTopHeightRotations = 144; // motor rotations
     public static final double kBottomHeightRotations = 0;
 
-    public static final double kP = .25;
+    public static final double kP = .3;
     public static final double kI = 0;
     public static final double kD = 0;
     public static final TrapezoidProfile.Constraints kConstraints = new TrapezoidProfile.Constraints(55, 75);
