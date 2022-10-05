@@ -127,24 +127,22 @@ public class RobotContainer {
             drivetrain.setModuleStates(states, false, true);
         }, drivetrain);
 
-        //Climber down
-        controller.povRightButton
+        //Climber manual up 
+        controller.povUpButton
+            .whenPressed(()->climber.setVolts(10), climber)
+            .whenReleased(()->climber.setVolts(0), climber);
+
+        //Climber manual down
+        controller.povDownButton
             .whenPressed(()->climber.setVolts(-10), climber)
             .whenReleased(()->climber.setVolts(0), climber);
 
+        //Climber auto down 
+        controller.povRightButton
+            .whenPressed(()-> climber.setRotations(ClimberConstants.kBottomHeightRotations), climber);
+
         controller.povLeftButton
-            .whenPressed(()->climber.setVolts(10), climber)
-            .whenReleased(()->climber.setVolts(0), climber);
-            
-        controller.povDownButton
-            .whenPressed(()-> climber.setRotations(ClimberConstants.kBottomHeightRotations),climber);
-            /*.whenPressed(()->climber.setVolts(-10), climber)
-            .whenReleased(()->climber.setVolts(0), climber); (attempt to fix climber jitter)*/
-        //Climber up
-        controller.povUpButton
-            .whenPressed(()-> climber.setRotations(ClimberConstants.kTopHeightRotations),climber);
-            /*.whenPressed(()->climber.setVolts(10), climber)
-            .whenReleased(()->climber.setVolts(0), climber);*/
+            .whenPressed(()-> climber.setRotations(ClimberConstants.kBottomHeightRotations), climber);
 
         //Clear intake and indexer
         controller.leftStick
@@ -298,24 +296,22 @@ public class RobotContainer {
         }, shooter));
     }
     private void configureOperatorBinds(OCXboxController controller){
-        //Climber down
-        controller.povRightButton
-            .whenPressed(()->climber.setVolts(-10), climber)
-            .whenReleased(()->climber.setVolts(0), climber);
-
-        controller.povLeftButton
-            .whenPressed(()->climber.setVolts(10), climber)
-            .whenReleased(()->climber.setVolts(0), climber);
-            
-        controller.povDownButton
-            .whenPressed(()-> climber.setRotations(ClimberConstants.kBottomHeightRotations),climber);
-            /*.whenPressed(()->climber.setVolts(-10), climber)
-            .whenReleased(()->climber.setVolts(0), climber); (attempt to fix climber jitter)*/
-        //Climber up
+    //Climber manual up 
         controller.povUpButton
-            .whenPressed(()-> climber.setRotations(ClimberConstants.kTopHeightRotations),climber);
-            /*.whenPressed(()->climber.setVolts(10), climber)
-            .whenReleased(()->climber.setVolts(0), climber);*/
+        .whenPressed(()->climber.setVolts(10), climber)
+        .whenReleased(()->climber.setVolts(0), climber);
+
+    //Climber manual down
+    controller.povDownButton
+        .whenPressed(()->climber.setVolts(-10), climber)
+        .whenReleased(()->climber.setVolts(0), climber);
+
+    //Climber auto down 
+    controller.povRightButton
+        .whenPressed(()-> climber.setRotations(ClimberConstants.kBottomHeightRotations), climber);
+
+    controller.povLeftButton
+        .whenPressed(()-> climber.setRotations(ClimberConstants.kBottomHeightRotations), climber);
 
         //Clear intake and indexer
         controller.leftStick
