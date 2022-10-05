@@ -25,6 +25,7 @@ import frc.robot.common.OCXboxController;
 import frc.robot.simulation.CargoSim;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.climber.Climber;
+import frc.robot.subsystems.climber.ClimberConstants;
 import frc.robot.subsystems.drivetrain.SwerveDrive;
 import frc.robot.subsystems.drivetrain.commands.TeleopDriveAngle;
 import frc.robot.subsystems.drivetrain.commands.TeleopDriveBasic;
@@ -46,6 +47,7 @@ public class RobotContainer {
     private final Superstructure superstructure = new Superstructure(climber, drivetrain, indexer, intake, shooter, vision);
 
     private final OCXboxController driver = new OCXboxController(0);
+    private final OCXboxController operator = new OCXboxController(1);
     private final Compressor compressor = new Compressor(PneumaticsModuleType.CTREPCM);
 
     private final AutoOptions autoOptions = new AutoOptions(climber, drivetrain, indexer, intake, shooter, superstructure);
@@ -55,6 +57,7 @@ public class RobotContainer {
     public RobotContainer(){
 
         configureDriverBinds(driver);
+        configureOperatorBinds(operator);
         //configureTestBinds(driver);
 
         autoOptions.submit();
@@ -125,13 +128,23 @@ public class RobotContainer {
         }, drivetrain);
 
         //Climber down
-        controller.povDownButton
+        controller.povRightButton
             .whenPressed(()->climber.setVolts(-10), climber)
             .whenReleased(()->climber.setVolts(0), climber);
-        //Climber up
-        controller.povUpButton
+
+        controller.povLeftButton
             .whenPressed(()->climber.setVolts(10), climber)
             .whenReleased(()->climber.setVolts(0), climber);
+            
+        controller.povDownButton
+            .whenPressed(()-> climber.setRotations(ClimberConstants.kBottomHeightRotations),climber);
+            /*.whenPressed(()->climber.setVolts(-10), climber)
+            .whenReleased(()->climber.setVolts(0), climber); (attempt to fix climber jitter)*/
+        //Climber up
+        controller.povUpButton
+            .whenPressed(()-> climber.setRotations(ClimberConstants.kTopHeightRotations),climber);
+            /*.whenPressed(()->climber.setVolts(10), climber)
+            .whenReleased(()->climber.setVolts(0), climber);*/
 
         //Clear intake and indexer
         controller.leftStick
@@ -283,6 +296,166 @@ public class RobotContainer {
                 //0
             );
         }, shooter));
+    }
+    private void configureOperatorBinds(OCXboxController controller){
+        //Climber down
+        controller.povRightButton
+            .whenPressed(()->climber.setVolts(-10), climber)
+            .whenReleased(()->climber.setVolts(0), climber);
+
+        controller.povLeftButton
+            .whenPressed(()->climber.setVolts(10), climber)
+            .whenReleased(()->climber.setVolts(0), climber);
+            
+        controller.povDownButton
+            .whenPressed(()-> climber.setRotations(ClimberConstants.kBottomHeightRotations),climber);
+            /*.whenPressed(()->climber.setVolts(-10), climber)
+            .whenReleased(()->climber.setVolts(0), climber); (attempt to fix climber jitter)*/
+        //Climber up
+        controller.povUpButton
+            .whenPressed(()-> climber.setRotations(ClimberConstants.kTopHeightRotations),climber);
+            /*.whenPressed(()->climber.setVolts(10), climber)
+            .whenReleased(()->climber.setVolts(0), climber);*/
+
+        //Clear intake and indexer
+        controller.leftStick
+            .whenPressed(()->{
+                intake.setVoltageOut();
+                indexer.setVoltageOut();
+            }, intake, indexer)
+            .whenReleased(()->{
+                intake.stop();
+                indexer.stop();
+            }, intake, indexer);
+        
+        // intake and automatically index cargo, rumble based on status
+        controller.rightTriggerButton
+            .whenPressed(
+                superstructure.intakeIndexCargo()
+                .deadlineWith(
+                    new RunCommand(()->{
+                        if(indexer.getTopSensed()){
+                            // pulsing rumble when full
+                            double rumble = Math.sin(Timer.getFPGATimestamp()*20);
+                            rumble = rumble < 0 ? 0 : 0.5;
+                            controller.rumble(rumble);
+                        }
+                        else if(indexer.shouldIndex()) controller.rumble(0.25);
+                        else controller.rumble(0);
+                    })
+                )
+            )
+            .whenReleased(
+                superstructure.stopIntake()
+                .alongWith(
+                    superstructure.stopIndexer(),
+                    new InstantCommand(()->controller.rumble(0))
+                )
+            );
+        
+        controller.bButton.whenPressed(()->intake.setExtended(false));
+
+        controller.yButton.whenPressed(superstructure.fenderShootHigh())
+        .whenReleased(()->{
+            shooter.stop();
+            indexer.stop();
+        }, shooter, indexer);
+
+        controller.aButton.whenPressed(superstructure.fenderShootLow())
+        .whenReleased(()->{
+            shooter.stop();
+            indexer.stop();
+        }, shooter, indexer);
+
+        // auto shoot high hub with pose estimation
+        controller.leftTriggerButton.whenPressed(
+            superstructure.autoShoot(
+                ()->driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
+                ()->driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
+                false
+            ).beforeStarting(()->controller.resetLimiters())
+        )
+        .whenReleased(
+            superstructure.stopDrive()
+            .alongWith(
+                superstructure.stopIndexer(),
+                superstructure.stopShooter()
+            )
+        );
+
+        // auto shoot high hub with only vision data
+        /*
+        controller.leftBumper.whenPressed(
+            superstructure.autoShoot(
+                ()->driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
+                ()->driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
+                true,
+                //drivetrain.getPose().transformBy(vision.getRobotToTarget(drivetrain.getHeading())).getTranslation(),
+                drivetrain.getPose().plus(
+                    new Transform2d(vision.getRobotToTargetTranslation(), new Rotation2d())
+                ).getTranslation(),
+                ()->vision.getHasTarget()
+            ).beforeStarting(()->controller.resetLimiters())
+        )
+        .whenReleased(
+            superstructure.stopDrive()
+            .alongWith(
+                superstructure.stopIndexer(),
+                superstructure.stopShooter()
+            )
+        );
+        */
+
+        controller.leftBumper.whenPressed(
+            new InstantCommand(controller::resetLimiters)
+            .andThen(new FunctionalCommand(
+                ()->{
+                    drivetrain.resetPathController();
+                    vision.resetFilter();
+                }, 
+                ()->{
+                    Translation2d target = vision.getFilteredRobotToTargetTranslation().plus(
+                        drivetrain.getPose().minus(drivetrain.getPose(vision.getLatencySeconds())).getTranslation()
+                    );
+                    boolean hasTarget = vision.getHasTarget();
+                    double dist = target.getNorm();
+                    Rotation2d targetAngle = new Rotation2d(target.getX(), target.getY())
+                        .plus(new Rotation2d(Math.PI))
+                        .plus(drivetrain.getHeading());
+                    Shooter.State targetShooterState = ShotMap.find(dist);
+                    shooter.setState(targetShooterState);
+                    //Drivetrain heading target to hub
+                    boolean driveAtGoal = drivetrain.drive(
+                        driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
+                        driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
+                        targetAngle,
+                        true
+                    );
+                    //Indexer feed when shooter && drivetrain ready
+                    if(driveAtGoal && shooter.withinTolerance() && hasTarget){
+                        indexer.setVoltageFeed();
+                    }
+                    else{
+                        indexer.stop();
+                    }
+                }, 
+                (interrupted)->{
+                    shooter.stop();
+                    indexer.stop();
+                    drivetrain.stop();
+                },
+                ()->false,
+                drivetrain, shooter, indexer
+            ))
+        )
+        .whenReleased(
+            superstructure.stopDrive()
+            .alongWith(
+                superstructure.stopIndexer(),
+                superstructure.stopShooter()
+            )
+        );
+        
     }
     // Manual shot tuning
     private void configureTestBinds(OCXboxController controller){

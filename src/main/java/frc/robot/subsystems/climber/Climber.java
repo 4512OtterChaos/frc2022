@@ -88,6 +88,11 @@ public class Climber extends SubsystemBase {
     public void log(){
         SmartDashboard.putNumber("Climber/Left Pos", leftEncoder.getPosition());
         SmartDashboard.putNumber("Climber/Right Pos", rightEncoder.getPosition());
+
+        // New code 
+        SmartDashboard.putNumber("Climber/Right point", rightController.getSetpoint().position);
+        SmartDashboard.putNumber("Climber/Left point", leftController.getSetpoint().position);
+
     }
 
 
