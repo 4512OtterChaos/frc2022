@@ -46,8 +46,8 @@ public class OCXboxController extends XboxController {
     private double drivespeed = kSpeedDefault;
     private static final double kTurnDrivespeed = 0.4; //Og speed 0.6 
 
-    private SlewRateLimiter forwardLimiter = new SlewRateLimiter(1.0 / 0.5); // 1 / x seconds to full 0.5 
-    private SlewRateLimiter strafeLimiter = new SlewRateLimiter(1.0 / 0.5); // 0.5
+    private SlewRateLimiter forwardLimiter = new SlewRateLimiter(1.0 / 0.6); // 1 / x seconds to full 0.5 
+    private SlewRateLimiter strafeLimiter = new SlewRateLimiter(1.0 / 0.6); // 0.5
     private SlewRateLimiter turnLimiter = new SlewRateLimiter(1 / 0.33); //0.33
 
     /**
