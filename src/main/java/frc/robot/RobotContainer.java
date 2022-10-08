@@ -242,7 +242,7 @@ public class RobotContainer {
                 }, 
                 ()->{
                     Translation2d target = vision.getFilteredRobotToTargetTranslation().plus(
-                        drivetrain.getPose().minus(drivetrain.getPose(vision.getLatencySeconds())).getTranslation()
+                        drivetrain.getPose(vision.getLatencySeconds()).minus(drivetrain.getPose()).getTranslation()
                     );
                     boolean hasTarget = vision.getHasTarget();
                     double dist = target.getNorm();
