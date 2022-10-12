@@ -135,20 +135,13 @@ public class AutoOptions {
         );
 
         autoOptions.addOption("FenderDoubleLeft",
-            superstructure.fenderShootHigh(2.5)
-            .andThen(()->{
-                shooter.stop();
-                indexer.stop();
-            }, indexer, shooter)
-            .andThen(
-                autoFollowTrajectory(
-                    drivetrain, 
-                    "DoubleLeft1", 
-                    AutoConstants.kMediumSpeedConfig,
-                    true
-                ) 
-                .deadlineWith(superstructure.intakeIndexCargo())
-            )
+            autoFollowTrajectory(
+                drivetrain, 
+                "DoubleLeft1", 
+                AutoConstants.kMediumSpeedConfig,
+                true
+            ) 
+            .deadlineWith(superstructure.intakeIndexCargo())
             .andThen(autoFollowTrajectory(
                 drivetrain, 
                 "FenderDoubleLeft2", 
