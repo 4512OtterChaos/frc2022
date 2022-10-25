@@ -125,7 +125,7 @@ public class SwerveConstants {
         steerConfig.motionCruiseVelocity = TalonUtil.radiansToVelocity(kSteerVelocity, kSteerGearRatio);
         steerConfig.motionAcceleration = TalonUtil.radiansToVelocity(kSteerAcceleration, kSteerGearRatio);
         steerConfig.slot0.allowableClosedloopError = kAllowableSteeringError;
-        steerConfig.neutralDeadband = isReal ? 0.05 : 0.001;
+        steerConfig.neutralDeadband = isReal ? 0.01 : 0.001;
         steerConfig.supplyCurrLimit = new SupplyCurrentLimitConfiguration(
             true,
             kSteerContinuousCurrentLimit,

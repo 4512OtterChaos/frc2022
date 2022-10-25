@@ -304,6 +304,7 @@ public class SwerveDrive extends SubsystemBase {
         SmartDashboard.putNumber("Drive/Target VY", targetChassisSpeeds.vyMetersPerSecond);
         SmartDashboard.putNumber("Drive/Target Omega Degrees", Math.toDegrees(targetChassisSpeeds.omegaRadiansPerSecond));
         
+        //SwerveModule.updateModuleConstants();
         for(int i=0;i<4;i++){
             SwerveModule module = swerveMods[i];
             module.log();

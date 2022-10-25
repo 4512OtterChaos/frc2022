@@ -8,6 +8,7 @@ import com.revrobotics.REVPhysicsSim;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -24,6 +25,9 @@ public class Robot extends TimedRobot {
     @Override
     public void robotInit() {
         container = new RobotContainer();
+
+        LiveWindow.disableAllTelemetry();
+        LiveWindow.setEnabled(false);
     }
     
     @Override
@@ -51,6 +55,7 @@ public class Robot extends TimedRobot {
     @Override
     public void teleopInit() {
         container.setAllBrake(true);
+        container.init(false);
 
         if(autoCommand != null){
             autoCommand.cancel();
@@ -91,7 +96,10 @@ public class Robot extends TimedRobot {
     }
     
     @Override
-    public void testInit() {}
+    public void testInit() {
+        container.setAllBrake(true);
+        container.init(true);
+    }
     
     @Override
     public void testPeriodic() {}

@@ -46,8 +46,8 @@ public class RobotContainer {
     private final Vision vision = new Vision();
     private final Superstructure superstructure = new Superstructure(climber, drivetrain, indexer, intake, shooter, vision);
 
-    private final OCXboxController driver = new OCXboxController(0);
-    private final OCXboxController operator = new OCXboxController(1);
+    private OCXboxController driver = new OCXboxController(0);
+    private OCXboxController operator = new OCXboxController(1);
     private final Compressor compressor = new Compressor(PneumaticsModuleType.CTREPCM);
 
     private final AutoOptions autoOptions = new AutoOptions(climber, drivetrain, indexer, intake, shooter, superstructure);
@@ -55,11 +55,6 @@ public class RobotContainer {
     private final Field2d field = new Field2d();
 
     public RobotContainer(){
-
-        configureDriverBinds(driver);
-        configureOperatorBinds(operator);
-        //configureTestBinds(driver);
-
         autoOptions.submit();
         SmartDashboard.putData("Field", field);
 
@@ -83,6 +78,22 @@ public class RobotContainer {
         shooter.stop();
         climber.stop();
         shooter.setHood(0);
+    }
+
+    public void init(boolean testMode) {
+        if(!testMode) {
+            driver = new OCXboxController(0);
+            operator = new OCXboxController(1);
+            configureDriverBinds(driver);
+            configureOperatorBinds(operator);
+        }
+        else {
+            driver = new OCXboxController(0);
+            operator = new OCXboxController(1);
+            configureTestBinds(driver);
+        }
+        
+        
     }
 
     public void setAllBrake(boolean is){
@@ -455,7 +466,7 @@ public class RobotContainer {
     }
     // Manual shot tuning
     private void configureTestBinds(OCXboxController controller){
-        drivetrain.setDefaultCommand(new TeleopDriveBasic(controller, drivetrain));
+        drivetrain.setDefaultCommand(new TeleopDriveAngle(controller, drivetrain));
 
         // toggle between field-relative and robot-relative control
         controller.backButton.whenPressed(()->{
