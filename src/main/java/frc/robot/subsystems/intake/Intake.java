@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Robot;
 import frc.robot.util.TalonUtil;
 
 public class Intake extends SubsystemBase {
@@ -30,17 +31,22 @@ public class Intake extends SubsystemBase {
     private final DoubleSolenoid pistons = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, kPistonExtendPort, kPistonRetractPort);
 
     public Intake() {
-        setUpIntake(true);
+        setupIntake(true);
     }
-    private void setUpIntake(boolean init){
-        
-            if(init){
+    private void setupIntake(boolean init){
+        if(init){
             motor.configAllSettings(kIntakeConfiguration);
         }
         motor.setNeutralMode(NeutralMode.Brake);
         motor.enableVoltageCompensation(true);
         motor.setInverted(kMotorInverted);
-        TalonUtil.configStatusSlow(motor);
+        TalonUtil.configStatusCurrent(motor);
+        if(Robot.isReal()) {
+            TalonUtil.configStatusFollower(motor);
+        }
+        else {
+            TalonUtil.configStatusSim(motor);
+        }
     }
     
     @Override

@@ -16,43 +16,44 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.auto.AutoConstants;
+import frc.robot.subsystems.drivetrain.SwerveModule.SwerveModules;
+import io.github.oblarg.oblog.Loggable;
+import io.github.oblarg.oblog.annotations.*;
 
-public class SwerveDrive extends SubsystemBase {
+@Log.Exclude
+public class SwerveDrive extends SubsystemBase implements Loggable {
 
     // construct our modules in order with their specific constants
-    private final SwerveModule[] swerveMods = new SwerveModule[]{
+    private final SwerveModules swerveMods = new SwerveModules(
         new SwerveModule(SwerveConstants.Module.FL),
         new SwerveModule(SwerveConstants.Module.FR),
         new SwerveModule(SwerveConstants.Module.BL),
         new SwerveModule(SwerveConstants.Module.BR)
-    };
+    );
+    private final SwerveDriveKinematics kinematics = swerveMods.getKinematics();
+
     private final WPI_Pigeon2 gyro = new WPI_Pigeon2(SwerveConstants.kPigeonID);
     
-    private final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
-        swerveMods[0].getModuleConstants().centerOffset,
-        swerveMods[1].getModuleConstants().centerOffset,
-        swerveMods[2].getModuleConstants().centerOffset,
-        swerveMods[3].getModuleConstants().centerOffset
-    );
     private final SwerveDrivePoseEstimator poseEstimator;
     private ChassisSpeeds targetChassisSpeeds = new ChassisSpeeds();
     private boolean isFieldRelative = true;
 
     // path controller and its dimension-specific controllers
     // i.e 1 meter error in the x direction = kP meters per second x velocity added
+    @Config.PIDController
     private final PIDController xController = new PIDController(AutoConstants.kPXController, 0, 0);
+    @Config.PIDController
     private final PIDController yController = new PIDController(AutoConstants.kPYController, 0, 0);
     // our auto rotation targets are profiled to obey velocity and acceleration constraints
+    @Config.PIDController
     private final ProfiledPIDController thetaController = new ProfiledPIDController(
         AutoConstants.kPThetaController, 0, 0,
         AutoConstants.kThetaControllerConstraints
@@ -84,9 +85,7 @@ public class SwerveDrive extends SubsystemBase {
 
     @Override
     public void periodic() {
-        for(int i=0;i<4;i++){
-            swerveMods[i].periodic();
-        }
+        swerveMods.each((mod)->mod.periodic());
 
         // display our robot (and individual modules) pose on the field
         poseEstimator.update(getGyroYaw(), getModuleStates());
@@ -166,7 +165,7 @@ public class SwerveDrive extends SubsystemBase {
     public void setModuleStates(SwerveModuleState[] desiredStates, boolean openLoop, boolean steerInPlace){
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, SwerveConstants.kMaxLinearSpeed);
         for(int i=0;i<4;i++){
-            swerveMods[i].setDesiredState(desiredStates[i], openLoop, steerInPlace);
+            swerveMods.modules[i].setDesiredState(desiredStates[i], openLoop, steerInPlace);
         }
     }
     /**
@@ -187,10 +186,10 @@ public class SwerveDrive extends SubsystemBase {
     public void setIsFieldRelative(boolean is) {isFieldRelative = is;}
 
     public void setBrakeOn(boolean is){
-        for(SwerveModule mod : swerveMods){
+        swerveMods.each((mod)->{
             mod.setDriveBrake(is);
             mod.setSteerBrake(is);
-        }
+        });
     }
 
     public void zeroGyro(){
@@ -261,11 +260,12 @@ public class SwerveDrive extends SubsystemBase {
      * @return An ordered array filled with module states (rotation, velocity)
      */
     public SwerveModuleState[] getModuleStates(){
+        SwerveModule[] modules = swerveMods.modules;
         return new SwerveModuleState[]{
-            swerveMods[0].getAbsoluteState(),
-            swerveMods[1].getAbsoluteState(),
-            swerveMods[2].getAbsoluteState(),
-            swerveMods[3].getAbsoluteState()
+            modules[0].getAbsoluteState(),
+            modules[1].getAbsoluteState(),
+            modules[2].getAbsoluteState(),
+            modules[3].getAbsoluteState()
         };
     }
     /**
@@ -274,7 +274,7 @@ public class SwerveDrive extends SubsystemBase {
     public Pose2d[] getModulePoses(){
         Pose2d[] modulePoses = new Pose2d[4];
         for(int i=0;i<4;i++){
-            SwerveModule module = swerveMods[i];
+            SwerveModule module = swerveMods.modules[i];
             modulePoses[i] = getPose().transformBy(new Transform2d(module.getModuleConstants().centerOffset, module.getAbsoluteHeading()));
         }
         return modulePoses;
@@ -304,11 +304,7 @@ public class SwerveDrive extends SubsystemBase {
         SmartDashboard.putNumber("Drive/Target VY", targetChassisSpeeds.vyMetersPerSecond);
         SmartDashboard.putNumber("Drive/Target Omega Degrees", Math.toDegrees(targetChassisSpeeds.omegaRadiansPerSecond));
         
-        //SwerveModule.updateModuleConstants();
-        for(int i=0;i<4;i++){
-            SwerveModule module = swerveMods[i];
-            module.log();
-        }
+        swerveMods.each((mod)->mod.log());
     }
     public void logTrajectory(Trajectory trajectory) {logTrajectory = trajectory;}
     public Trajectory getLogTrajectory() {return logTrajectory;}
@@ -320,10 +316,7 @@ public class SwerveDrive extends SubsystemBase {
 
     @Override
     public void simulationPeriodic(){
-        for(int i=0;i<4;i++){
-            SwerveModule module = swerveMods[i];
-            module.simulationPeriodic();
-        }
+        swerveMods.each((mod)->mod.simulationPeriodic());
 
         double chassisOmega = getChassisSpeeds().omegaRadiansPerSecond;
         chassisOmega = Math.toDegrees(chassisOmega);
@@ -332,7 +325,7 @@ public class SwerveDrive extends SubsystemBase {
 
     public double getCurrentDraw(){
         double sum = 0;
-        for(SwerveModule module : swerveMods) sum += module.getDriveCurrentDraw() + module.getSteerCurrentDraw();
+        for(SwerveModule module : swerveMods.modules) sum += module.getDriveCurrentDraw() + module.getSteerCurrentDraw();
         return sum;
     }
 }

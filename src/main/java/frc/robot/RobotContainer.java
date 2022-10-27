@@ -36,9 +36,12 @@ import frc.robot.subsystems.shooter.ShotMap;
 import frc.robot.subsystems.vision.Limelight;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.FieldUtil;
+import io.github.oblarg.oblog.Logger;
+import io.github.oblarg.oblog.annotations.*;
 
 public class RobotContainer {
     private final Climber climber = new Climber();
+    @Log.Include
     private final SwerveDrive drivetrain = new SwerveDrive();
     private final Indexer indexer = new Indexer();
     private final Intake intake = new Intake();
@@ -60,6 +63,8 @@ public class RobotContainer {
 
         LiveWindow.disableAllTelemetry();
         SmartDashboard.putNumber("Shooter/RPM Offset", 0);
+
+        Logger.configureLoggingAndConfig(this, false);
     }
 
     public void periodic(){
@@ -531,6 +536,7 @@ public class RobotContainer {
     }
 
     public void log(){
+        Logger.updateEntries();
         drivetrain.log();
         intake.log();
         indexer.log();

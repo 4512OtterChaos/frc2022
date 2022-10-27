@@ -1,5 +1,6 @@
 package frc.robot.util;
 
+import com.ctre.phoenix.ErrorCode;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
@@ -10,17 +11,53 @@ public class TalonUtil {
 
     /**
      * Configures the status frame periods of given motors
+     * @return Success
      */
-    public static void configStatusNormal(WPI_TalonFX... motors){
+    public static boolean configStatusSolo(WPI_TalonFX... motors){
+        boolean success = true;
         for(WPI_TalonFX motor : motors){
-            motor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, 20, 50);
+            ErrorCode result = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, 20, 20);
+            success = success && (result == ErrorCode.OK);
         }
+        return success;
     }
-    
-    public static void configStatusSlow(WPI_TalonFX... motors){
+    /**
+     * Configures the status frame periods of given motors
+     * @return Success
+     */
+    public static boolean configStatusFollower(WPI_TalonFX... motors){
+        boolean success = true;
         for(WPI_TalonFX motor : motors){
-            motor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, 200, 50);
+            ErrorCode result1 = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, 255, 20);
+            ErrorCode result2 = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0, 255, 20);
+            success = success && (result1 == ErrorCode.OK) && (result2 == ErrorCode.OK);
         }
+        return success;
+    }
+    /**
+     * Configures the status frame periods of given motors
+     * @return Success
+     */
+    public static boolean configStatusCurrent(WPI_TalonFX... motors){
+        boolean success = true;
+        for(WPI_TalonFX motor : motors){
+            ErrorCode result = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_Brushless_Current, 20, 20);
+            success = success && (result == ErrorCode.OK);
+        }
+        return success;
+    }
+    /**
+     * Configures the status frame periods of given motors
+     * @return Success
+     */
+    public static boolean configStatusSim(WPI_TalonFX... motors){
+        boolean success = true;
+        for(WPI_TalonFX motor : motors){
+            ErrorCode result1 = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0, 10, 20);
+            ErrorCode result2 = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_10_Targets, 10, 20);
+            success = success && (result1 == ErrorCode.OK) && (result2 == ErrorCode.OK);
+        }
+        return success;
     }
 
 

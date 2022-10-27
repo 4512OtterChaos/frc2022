@@ -2,8 +2,7 @@ package frc.robot.subsystems.drivetrain;
 
 import static frc.robot.subsystems.drivetrain.SwerveConstants.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.function.Consumer;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.DemandType;
@@ -16,6 +15,7 @@ import com.ctre.phoenix.sensors.WPI_CANCoder;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -23,21 +23,17 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Robot;
 import frc.robot.subsystems.drivetrain.SwerveConstants.Module;
 import frc.robot.util.TalonUtil;
-import frc.robot.util.TunableNumber;
+import io.github.oblarg.oblog.Loggable;
+import io.github.oblarg.oblog.annotations.*;
 
-public class SwerveModule {
+@Log.Exclude
+public class SwerveModule implements Loggable {
 
     // Module Constants
     private final Module moduleConstants;
-    private static List<SwerveModule> modules = new ArrayList<>();
-    private static final TunableNumber tunableDriveKP = new TunableNumber("moduleDriveKP", SwerveConstants.kDriveKP);
-    private static final TunableNumber tunableDriveKI = new TunableNumber("moduleDriveKI", SwerveConstants.kDriveKI);
-    private static final TunableNumber tunableDriveKD = new TunableNumber("moduleDriveKD", SwerveConstants.kDriveKD);
-    private static final TunableNumber tunableSteerKP = new TunableNumber("moduleSteerKP", SwerveConstants.kSteerKP);
-    private static final TunableNumber tunableSteerKI = new TunableNumber("moduleSteerKI", SwerveConstants.kSteerKI);
-    private static final TunableNumber tunableSteerKD = new TunableNumber("moduleSteerKD", SwerveConstants.kSteerKD);
 
     private SwerveModuleState lastDesiredState = new SwerveModuleState();
     private double lastTargetTotalAngle = 0;
@@ -49,7 +45,6 @@ public class SwerveModule {
 
     public SwerveModule(Module moduleConstants){
         this.moduleConstants = moduleConstants;
-        modules.add(this);
 
         driveMotor = new WPI_TalonFX(moduleConstants.driveMotorID);
         steerMotor = new WPI_TalonFX(moduleConstants.steerMotorID);
@@ -72,7 +67,8 @@ public class SwerveModule {
         driveMotor.enableVoltageCompensation(true);
         driveMotor.setSelectedSensorPosition(0);
         driveMotor.setInverted(kInvertDrive);
-        TalonUtil.configStatusNormal(driveMotor);
+        TalonUtil.configStatusSolo(driveMotor);
+        if(Robot.isSimulation()) TalonUtil.configStatusSim(driveMotor);
     }
     private void setupCancoder(boolean init){
         steerEncoder.configAllSettings(cancoderConfig);
@@ -85,7 +81,8 @@ public class SwerveModule {
         steerMotor.enableVoltageCompensation(true);
         steerMotor.setInverted(kInvertSteer);
         resetToAbsolute();
-        TalonUtil.configStatusNormal(steerMotor);
+        TalonUtil.configStatusSolo(steerMotor);
+        if(Robot.isSimulation()) TalonUtil.configStatusSim(steerMotor);
     }
 
     public void periodic(){
@@ -211,35 +208,92 @@ public class SwerveModule {
     public Module getModuleConstants(){
         return moduleConstants;
     }
-    public void configAllSettings(TalonFXConfiguration driveConfig, TalonFXConfiguration steerConfig) {
-        driveMotor.configAllSettings(driveConfig);
-        steerMotor.configAllSettings(steerConfig);
+    public void configDriveSettings(TalonFXConfiguration driveConfig) {
+        driveMotor.configAllSettings(driveConfig, 0);
     }
-    public static void updateModuleConstants() {
-        TalonFXConfiguration driveConfig = SwerveConstants.driveConfig;
-        TalonFXConfiguration steerConfig = SwerveConstants.steerConfig;
-        
-        if(tunableDriveKP.hasChanged()) {
-            driveConfig.slot0.kP = tunableDriveKP.get();
-        }
-        if(tunableDriveKI.hasChanged()) {
-            driveConfig.slot0.kI = tunableDriveKI.get();
-        }
-        if(tunableDriveKD.hasChanged()) {
-            driveConfig.slot0.kD = tunableDriveKD.get();
-        }
-        if(tunableSteerKP.hasChanged()) {
-            steerConfig.slot0.kP = tunableSteerKP.get();
-        }
-        if(tunableSteerKI.hasChanged()) {
-            steerConfig.slot0.kI = tunableSteerKI.get();
-        }
-        if(tunableSteerKD.hasChanged()) {
-            steerConfig.slot0.kD = tunableSteerKD.get();
+    public void configSteerSettings(TalonFXConfiguration steerConfig) {
+        steerMotor.configAllSettings(steerConfig, 0);
+    }
+
+    static class SwerveModules implements Loggable {
+        public final SwerveModule[] modules;
+    
+        public SwerveModules(SwerveModule... modules) {
+            this.modules = modules;
         }
 
-        for(SwerveModule module : modules) {
-            module.configAllSettings(driveConfig, steerConfig);
+        public void each(Consumer<SwerveModule> func) {
+            for(SwerveModule module : modules) {
+                func.accept(module);
+            }
+        }
+        public SwerveDriveKinematics getKinematics() {
+            return new SwerveDriveKinematics(
+                modules[0].getModuleConstants().centerOffset,
+                modules[1].getModuleConstants().centerOffset,
+                modules[2].getModuleConstants().centerOffset,
+                modules[3].getModuleConstants().centerOffset
+            );
+        }
+    
+        @Config(defaultValueNumeric = SwerveConstants.kDriveKP)
+        public void configDriveKP(double kP) {
+            for(SwerveModule module : modules) {
+                module.steerMotor.config_kP(0, kP);
+            }
+        }
+        @Config(defaultValueNumeric = SwerveConstants.kDriveKI)
+        public void configDriveKI(double kI) {
+            for(SwerveModule module : modules) {
+                module.steerMotor.config_kI(0, kI);
+            }
+        }
+        @Config(defaultValueNumeric = SwerveConstants.kDriveKD)
+        public void configDriveKD(double kD) {
+            for(SwerveModule module : modules) {
+                module.steerMotor.config_kD(0, kD);
+            }
+        }
+        @Config(defaultValueNumeric = SwerveConstants.kSteerKP)
+        public void configSteerKP(double kP) {
+            for(SwerveModule module : modules) {
+                module.steerMotor.config_kP(0, kP);
+            }
+        }
+        @Config(defaultValueNumeric = SwerveConstants.kSteerKI)
+        public void configSteerKI(double kI) {
+            for(SwerveModule module : modules) {
+                module.steerMotor.config_kI(0, kI);
+            }
+        }
+        @Config(defaultValueNumeric = SwerveConstants.kSteerKD)
+        public void configSteerKD(double kD) {
+            for(SwerveModule module : modules) {
+                module.steerMotor.config_kD(0, kD);
+            }
+        }
+        @Config(defaultValueNumeric = SwerveConstants.kSteerVelocity)
+        public void configSteerVelocity(double velocity) {
+            for(SwerveModule module : modules) {
+                module.steerMotor.configMotionCruiseVelocity(
+                    TalonUtil.rotationsToVelocity(velocity, SwerveConstants.kSteerGearRatio)
+                );
+            }
+        }
+        @Config(defaultValueNumeric = SwerveConstants.kSteerAcceleration)
+        public void configSteerAccel(double accel) {
+            for(SwerveModule module : modules) {
+                module.steerMotor.configMotionAcceleration(
+                    TalonUtil.rotationsToVelocity(accel, SwerveConstants.kSteerGearRatio)
+                );
+            }
+        }
+        @Config(defaultValueNumeric = 0.2)
+        public void configSteerFF(double kv) {
+            for(SwerveModule module : modules) {
+                double kFF = kv / 12 * 1023 / TalonUtil.radiansToVelocity(1, 12.8);
+                module.steerMotor.config_kF(0, kFF);
+            }
         }
     }
 

@@ -91,8 +91,8 @@ public class SwerveConstants {
     public static final double kSteerKP = 0.3;
     public static final double kSteerKI = 0;
     public static final double kSteerKD = 1;
-    public static final double kSteerVelocity = Units.rotationsToRadians(4);
-    public static final double kSteerAcceleration = Units.rotationsToRadians(20);
+    public static final double kSteerVelocity = 4; // rotations per second
+    public static final double kSteerAcceleration = 20; // rotations per second squared
     public static final int kAllowableSteeringError = 80;
 
     // The configurations applied to swerve CTRE devices
@@ -122,8 +122,8 @@ public class SwerveConstants {
         steerConfig.slot0.kP = kSteerKP;
         steerConfig.slot0.kI = kSteerKI;
         steerConfig.slot0.kD = kSteerKD;
-        steerConfig.motionCruiseVelocity = TalonUtil.radiansToVelocity(kSteerVelocity, kSteerGearRatio);
-        steerConfig.motionAcceleration = TalonUtil.radiansToVelocity(kSteerAcceleration, kSteerGearRatio);
+        steerConfig.motionCruiseVelocity = TalonUtil.rotationsToVelocity(kSteerVelocity, kSteerGearRatio);
+        steerConfig.motionAcceleration = TalonUtil.rotationsToVelocity(kSteerAcceleration, kSteerGearRatio);
         steerConfig.slot0.allowableClosedloopError = kAllowableSteeringError;
         steerConfig.neutralDeadband = isReal ? 0.01 : 0.001;
         steerConfig.supplyCurrLimit = new SupplyCurrentLimitConfiguration(
