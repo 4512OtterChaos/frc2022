@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
@@ -340,5 +341,22 @@ public class Superstructure extends SubsystemBase {
     public Command autoShoot(double timeout){
         return autoShoot(()->0, ()->0, false)
             .withTimeout(timeout);
+    }
+
+    /**
+     * Automatically adjust the hood angle based on current odom distance to hub.
+     * (This is the shooter default command)
+     */
+    public Command autoHood() {
+        return new RunCommand(()->{
+            shooter.setHood(
+                ShotMap.find(
+                    drivetrain.getPose().getTranslation().getDistance(FieldUtil.kFieldCenter)
+                    
+                ).hoodMM
+                
+                //0
+            );
+        }, shooter);
     }
 }

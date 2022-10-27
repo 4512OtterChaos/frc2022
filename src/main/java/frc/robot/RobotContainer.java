@@ -300,16 +300,7 @@ public class RobotContainer {
         );
 
         // estimate hood angle continuously before shooting
-        shooter.setDefaultCommand(new RunCommand(()->{
-            shooter.setHood(
-                ShotMap.find(
-                    drivetrain.getPose().getTranslation().getDistance(FieldUtil.kFieldCenter)
-                    
-                ).hoodMM
-                
-                //0
-            );
-        }, shooter));
+        shooter.setDefaultCommand(superstructure.autoHood());
     }
     private void configureOperatorBinds(OCXboxController controller){
     //Climber manual up 
