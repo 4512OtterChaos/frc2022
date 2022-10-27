@@ -208,12 +208,6 @@ public class SwerveModule implements Loggable {
     public Module getModuleConstants(){
         return moduleConstants;
     }
-    public void configDriveSettings(TalonFXConfiguration driveConfig) {
-        driveMotor.configAllSettings(driveConfig, 0);
-    }
-    public void configSteerSettings(TalonFXConfiguration steerConfig) {
-        steerMotor.configAllSettings(steerConfig, 0);
-    }
 
     static class SwerveModules implements Loggable {
         public final SwerveModule[] modules;
@@ -239,19 +233,19 @@ public class SwerveModule implements Loggable {
         @Config(defaultValueNumeric = SwerveConstants.kDriveKP)
         public void configDriveKP(double kP) {
             for(SwerveModule module : modules) {
-                module.steerMotor.config_kP(0, kP);
+                module.driveMotor.config_kP(0, kP);
             }
         }
         @Config(defaultValueNumeric = SwerveConstants.kDriveKI)
         public void configDriveKI(double kI) {
             for(SwerveModule module : modules) {
-                module.steerMotor.config_kI(0, kI);
+                module.driveMotor.config_kI(0, kI);
             }
         }
         @Config(defaultValueNumeric = SwerveConstants.kDriveKD)
         public void configDriveKD(double kD) {
             for(SwerveModule module : modules) {
-                module.steerMotor.config_kD(0, kD);
+                module.driveMotor.config_kD(0, kD);
             }
         }
         @Config(defaultValueNumeric = SwerveConstants.kSteerKP)
