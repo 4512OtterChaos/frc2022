@@ -288,7 +288,7 @@ public class SwerveModule implements Loggable {
                 );
             }
         }
-        @Config(defaultValueNumeric = 0.2)
+        @Config(defaultValueNumeric = 0)
         public void configSteerFF(double kv) {
             for(SwerveModule module : modules) {
                 double kFF = kv / 12 * 1023 / TalonUtil.radiansToVelocity(1, 12.8);
