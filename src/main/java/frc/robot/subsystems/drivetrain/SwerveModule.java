@@ -310,13 +310,21 @@ public class SwerveModule implements Loggable {
     private final CANCoderSimCollection steerEncoderSim;
 
     public void simulationPeriodic(){
-        driveWheelSim.setInputVoltage(driveMotorSim.getMotorOutputLeadVoltage());
-        steeringSim.setInputVoltage(steerMotorSim.getMotorOutputLeadVoltage());
+        // apply our commanded voltage to our simulated physics mechanisms
+        double driveVoltage = driveMotorSim.getMotorOutputLeadVoltage();
+        if(driveVoltage >= 0) driveVoltage = Math.max(0, driveVoltage-kSteerFF.ks);
+        else driveVoltage = Math.min(0, driveVoltage+kSteerFF.ks);
+        driveWheelSim.setInputVoltage(driveVoltage);
+
+        double steerVoltage = steerMotorSim.getMotorOutputLeadVoltage();
+        if(steerVoltage >= 0) steerVoltage = Math.max(0, steerVoltage-kSteerFF.ks);
+        else steerVoltage = Math.min(0, steerVoltage+kSteerFF.ks);
+        steeringSim.setInputVoltage(steerVoltage);
+        
         driveWheelSim.update(0.02);
         steeringSim.update(0.02);
 
-        //SmartDashboard.putNumber("Drive Sim Model Amps", driveWheelSim.getCurrentDrawAmps());
-        //SmartDashboard.putNumber("Drive Sim Model Velocity Feet", Units.metersToFeet(driveWheelSim.getAngularVelocityRPM() * kWheelCircumference / 60));
+        // update our simulated devices with our simulated physics results
         double driveMotorVelocityNative = TalonUtil.rotationsToVelocity(driveWheelSim.getAngularVelocityRPM()/60, kDriveGearRatio);
         double driveMotorPositionDeltaNative = driveMotorVelocityNative*10*0.02;
         driveMotorSim.setIntegratedSensorVelocity((int)driveMotorVelocityNative);

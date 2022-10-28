@@ -89,12 +89,16 @@ public class Intake extends SubsystemBase {
         LinearSystemId.identifyVelocitySystem(kFF.kv, kFF.ka),
         DCMotor.getFalcon500(1),
         1,
-        VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(5))
+        VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(2))
     );
 
     @Override
     public void simulationPeriodic(){
-        flywheelSim.setInputVoltage(flywheelMotorSim.getMotorOutputLeadVoltage());
+        // apply our commanded voltage to our simulated physics mechanisms
+        double intakeVoltage = flywheelMotorSim.getMotorOutputLeadVoltage();
+        if(intakeVoltage >= 0) intakeVoltage = Math.max(0, intakeVoltage-kFF.ks);
+        else intakeVoltage = Math.min(0, intakeVoltage+kFF.ks);
+        flywheelSim.setInputVoltage(intakeVoltage);
         flywheelSim.update(0.02);
 
         double flywheelMotorVelocityNative = TalonUtil.radiansToVelocity(
