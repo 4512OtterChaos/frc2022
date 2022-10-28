@@ -209,25 +209,11 @@ public class SwerveModule implements Loggable {
         return moduleConstants;
     }
 
-    static class SwerveModules implements Loggable {
+    static class SwerveModulesLog implements Loggable {
         public final SwerveModule[] modules;
     
-        public SwerveModules(SwerveModule... modules) {
+        public SwerveModulesLog(SwerveModule... modules) {
             this.modules = modules;
-        }
-
-        public void each(Consumer<SwerveModule> func) {
-            for(SwerveModule module : modules) {
-                func.accept(module);
-            }
-        }
-        public SwerveDriveKinematics getKinematics() {
-            return new SwerveDriveKinematics(
-                modules[0].getModuleConstants().centerOffset,
-                modules[1].getModuleConstants().centerOffset,
-                modules[2].getModuleConstants().centerOffset,
-                modules[3].getModuleConstants().centerOffset
-            );
         }
     
         @Config(defaultValueNumeric = SwerveConstants.kDriveKP)
@@ -282,7 +268,7 @@ public class SwerveModule implements Loggable {
                 );
             }
         }
-        @Config(defaultValueNumeric = 0)
+        @Config(defaultValueNumeric = 0.23)
         public void configSteerFF(double kv) {
             for(SwerveModule module : modules) {
                 double kFF = kv / 12 * 1023 / TalonUtil.radiansToVelocity(1, 12.8);

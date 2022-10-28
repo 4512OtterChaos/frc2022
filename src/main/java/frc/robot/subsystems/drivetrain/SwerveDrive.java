@@ -24,7 +24,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.auto.AutoConstants;
-import frc.robot.subsystems.drivetrain.SwerveModule.SwerveModules;
+import frc.robot.subsystems.drivetrain.SwerveModule.SwerveModulesLog;
 import io.github.oblarg.oblog.Loggable;
 import io.github.oblarg.oblog.annotations.*;
 
@@ -32,13 +32,22 @@ import io.github.oblarg.oblog.annotations.*;
 public class SwerveDrive extends SubsystemBase implements Loggable {
 
     // construct our modules in order with their specific constants
-    private final SwerveModules swerveMods = new SwerveModules(
+    private final SwerveModule[] swerveMods = {
         new SwerveModule(SwerveConstants.Module.FL),
         new SwerveModule(SwerveConstants.Module.FR),
         new SwerveModule(SwerveConstants.Module.BL),
         new SwerveModule(SwerveConstants.Module.BR)
+    };
+
+    // auto-config
+    private final SwerveModulesLog logModules = new SwerveModulesLog(swerveMods);
+
+    private final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
+        swerveMods[0].getModuleConstants().centerOffset,
+        swerveMods[1].getModuleConstants().centerOffset,
+        swerveMods[2].getModuleConstants().centerOffset,
+        swerveMods[3].getModuleConstants().centerOffset
     );
-    private final SwerveDriveKinematics kinematics = swerveMods.getKinematics();
 
     private final WPI_Pigeon2 gyro = new WPI_Pigeon2(SwerveConstants.kPigeonID);
     
@@ -55,7 +64,7 @@ public class SwerveDrive extends SubsystemBase implements Loggable {
     // our auto rotation targets are profiled to obey velocity and acceleration constraints
     @Config.PIDController
     private final ProfiledPIDController thetaController = new ProfiledPIDController(
-        AutoConstants.kPThetaController, 0, 0,
+        AutoConstants.kPThetaController, 0, AutoConstants.kDThetaController,
         AutoConstants.kThetaControllerConstraints
     );
     // our auto controller which follows trajectories and adjusts target chassis speeds to reach a desired pose
@@ -85,7 +94,9 @@ public class SwerveDrive extends SubsystemBase implements Loggable {
 
     @Override
     public void periodic() {
-        swerveMods.each((mod)->mod.periodic());
+        for(SwerveModule module : swerveMods) {
+            module.periodic();
+        }
 
         // display our robot (and individual modules) pose on the field
         poseEstimator.update(getGyroYaw(), getModuleStates());
@@ -165,7 +176,7 @@ public class SwerveDrive extends SubsystemBase implements Loggable {
     public void setModuleStates(SwerveModuleState[] desiredStates, boolean openLoop, boolean steerInPlace){
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, SwerveConstants.kMaxLinearSpeed);
         for(int i=0;i<4;i++){
-            swerveMods.modules[i].setDesiredState(desiredStates[i], openLoop, steerInPlace);
+            swerveMods[i].setDesiredState(desiredStates[i], openLoop, steerInPlace);
         }
     }
     /**
@@ -186,10 +197,10 @@ public class SwerveDrive extends SubsystemBase implements Loggable {
     public void setIsFieldRelative(boolean is) {isFieldRelative = is;}
 
     public void setBrakeOn(boolean is){
-        swerveMods.each((mod)->{
-            mod.setDriveBrake(is);
-            mod.setSteerBrake(is);
-        });
+        for(SwerveModule module : swerveMods) {
+            module.setDriveBrake(is);
+            module.setSteerBrake(is);
+        }
     }
 
     public void zeroGyro(){
@@ -260,12 +271,11 @@ public class SwerveDrive extends SubsystemBase implements Loggable {
      * @return An ordered array filled with module states (rotation, velocity)
      */
     public SwerveModuleState[] getModuleStates(){
-        SwerveModule[] modules = swerveMods.modules;
         return new SwerveModuleState[]{
-            modules[0].getAbsoluteState(),
-            modules[1].getAbsoluteState(),
-            modules[2].getAbsoluteState(),
-            modules[3].getAbsoluteState()
+            swerveMods[0].getAbsoluteState(),
+            swerveMods[1].getAbsoluteState(),
+            swerveMods[2].getAbsoluteState(),
+            swerveMods[3].getAbsoluteState()
         };
     }
     /**
@@ -274,7 +284,7 @@ public class SwerveDrive extends SubsystemBase implements Loggable {
     public Pose2d[] getModulePoses(){
         Pose2d[] modulePoses = new Pose2d[4];
         for(int i=0;i<4;i++){
-            SwerveModule module = swerveMods.modules[i];
+            SwerveModule module = swerveMods[i];
             modulePoses[i] = getPose().transformBy(new Transform2d(module.getModuleConstants().centerOffset, module.getAbsoluteHeading()));
         }
         return modulePoses;
@@ -304,7 +314,9 @@ public class SwerveDrive extends SubsystemBase implements Loggable {
         SmartDashboard.putNumber("Drive/Target VY", targetChassisSpeeds.vyMetersPerSecond);
         SmartDashboard.putNumber("Drive/Target Omega Degrees", Math.toDegrees(targetChassisSpeeds.omegaRadiansPerSecond));
         
-        swerveMods.each((mod)->mod.log());
+        for(SwerveModule module : swerveMods) {
+            module.log();
+        }
     }
     public void logTrajectory(Trajectory trajectory) {logTrajectory = trajectory;}
     public Trajectory getLogTrajectory() {return logTrajectory;}
@@ -316,7 +328,9 @@ public class SwerveDrive extends SubsystemBase implements Loggable {
 
     @Override
     public void simulationPeriodic(){
-        swerveMods.each((mod)->mod.simulationPeriodic());
+        for(SwerveModule module : swerveMods) {
+            module.simulationPeriodic();
+        }
 
         double chassisOmega = getChassisSpeeds().omegaRadiansPerSecond;
         chassisOmega = Math.toDegrees(chassisOmega);
@@ -325,7 +339,7 @@ public class SwerveDrive extends SubsystemBase implements Loggable {
 
     public double getCurrentDraw(){
         double sum = 0;
-        for(SwerveModule module : swerveMods.modules) sum += module.getDriveCurrentDraw() + module.getSteerCurrentDraw();
+        for(SwerveModule module : swerveMods) sum += module.getDriveCurrentDraw() + module.getSteerCurrentDraw();
         return sum;
     }
 }

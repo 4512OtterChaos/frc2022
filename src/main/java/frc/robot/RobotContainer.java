@@ -64,7 +64,9 @@ public class RobotContainer {
         LiveWindow.disableAllTelemetry();
         SmartDashboard.putNumber("Shooter/RPM Offset", 0);
 
-        Logger.configureLoggingAndConfig(this, false);
+        Logger.configureLogging(this);
+        // uncomment this line for tuning mode
+        Logger.configureConfig(this);
     }
 
     public void periodic(){
