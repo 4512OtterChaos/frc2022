@@ -36,9 +36,12 @@ import frc.robot.subsystems.shooter.ShotMap;
 import frc.robot.subsystems.vision.Limelight;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.FieldUtil;
+import io.github.oblarg.oblog.Logger;
+import io.github.oblarg.oblog.annotations.*;
 
 public class RobotContainer {
     private final Climber climber = new Climber();
+    @Log.Include
     private final SwerveDrive drivetrain = new SwerveDrive();
     private final Indexer indexer = new Indexer();
     private final Intake intake = new Intake();
@@ -46,8 +49,8 @@ public class RobotContainer {
     private final Vision vision = new Vision();
     private final Superstructure superstructure = new Superstructure(climber, drivetrain, indexer, intake, shooter, vision);
 
-    private final OCXboxController driver = new OCXboxController(0);
-    private final OCXboxController operator = new OCXboxController(1);
+    private OCXboxController driver = new OCXboxController(0);
+    private OCXboxController operator = new OCXboxController(1);
     private final Compressor compressor = new Compressor(PneumaticsModuleType.CTREPCM);
 
     private final AutoOptions autoOptions = new AutoOptions(climber, drivetrain, indexer, intake, shooter, superstructure);
@@ -55,16 +58,15 @@ public class RobotContainer {
     private final Field2d field = new Field2d();
 
     public RobotContainer(){
-
-        configureDriverBinds(driver);
-        configureOperatorBinds(operator);
-        //configureTestBinds(driver);
-
         autoOptions.submit();
         SmartDashboard.putData("Field", field);
 
         LiveWindow.disableAllTelemetry();
         SmartDashboard.putNumber("Shooter/RPM Offset", 0);
+
+        Logger.configureLogging(this);
+        // uncomment this line for tuning mode
+        Logger.configureConfig(this);
     }
 
     public void periodic(){
@@ -83,6 +85,22 @@ public class RobotContainer {
         shooter.stop();
         climber.stop();
         shooter.setHood(0);
+    }
+
+    public void init(boolean testMode) {
+        if(!testMode) {
+            driver = new OCXboxController(0);
+            operator = new OCXboxController(1);
+            configureDriverBinds(driver);
+            configureOperatorBinds(operator);
+        }
+        else {
+            driver = new OCXboxController(0);
+            operator = new OCXboxController(1);
+            configureTestBinds(driver);
+        }
+        
+        
     }
 
     public void setAllBrake(boolean is){
@@ -284,16 +302,7 @@ public class RobotContainer {
         );
 
         // estimate hood angle continuously before shooting
-        shooter.setDefaultCommand(new RunCommand(()->{
-            shooter.setHood(
-                ShotMap.find(
-                    drivetrain.getPose().getTranslation().getDistance(FieldUtil.kFieldCenter)
-                    
-                ).hoodMM
-                
-                //0
-            );
-        }, shooter));
+        shooter.setDefaultCommand(superstructure.autoHood());
     }
     private void configureOperatorBinds(OCXboxController controller){
     //Climber manual up 
@@ -455,7 +464,7 @@ public class RobotContainer {
     }
     // Manual shot tuning
     private void configureTestBinds(OCXboxController controller){
-        drivetrain.setDefaultCommand(new TeleopDriveBasic(controller, drivetrain));
+        drivetrain.setDefaultCommand(new TeleopDriveAngle(controller, drivetrain));
 
         // toggle between field-relative and robot-relative control
         controller.backButton.whenPressed(()->{
@@ -520,6 +529,7 @@ public class RobotContainer {
     }
 
     public void log(){
+        Logger.updateEntries();
         drivetrain.log();
         intake.log();
         indexer.log();
