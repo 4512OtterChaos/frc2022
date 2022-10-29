@@ -20,6 +20,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.StartEndCommand;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.auto.AutoOptions;
 import frc.robot.common.OCXboxController;
 import frc.robot.simulation.CargoSim;
@@ -58,6 +60,8 @@ public class RobotContainer {
     private final Field2d field = new Field2d();
 
     public RobotContainer(){
+        configureEventBinds();
+
         autoOptions.submit();
         SmartDashboard.putData("Field", field);
 
@@ -88,10 +92,12 @@ public class RobotContainer {
     }
 
     public void init(boolean testMode) {
+        // dynamically change binds between modes
         if(!testMode) {
             driver = new OCXboxController(0);
             operator = new OCXboxController(1);
             configureDriverBinds(driver);
+            configureOperatorBinds(driver);
             configureOperatorBinds(operator);
         }
         else {
@@ -99,8 +105,6 @@ public class RobotContainer {
             operator = new OCXboxController(1);
             configureTestBinds(driver);
         }
-        
-        
     }
 
     public void setAllBrake(boolean is){
@@ -109,11 +113,24 @@ public class RobotContainer {
         indexer.setBrakeOn(is);
     }
 
-    private void configureDriverBinds(OCXboxController controller){
+    private void configureEventBinds() {
+        // estimate hood angle continuously before shooting
+        shooter.setDefaultCommand(superstructure.autoHood());
+
+        // count intaken cargo, rumble controllers
+        new Trigger(()->indexer.getBottomSensed())
+            .whenActive(superstructure.countCargo(1, driver, operator));
+
+        // count shot cargo
+
+        // count outtaken cargo
+    }
+    private void configureDriverBinds(OCXboxController controller) {
         // when no other command is using the drivetrain, we
         // pass the joysticks for forward, strafe, and angular position control
         drivetrain.setDefaultCommand(new TeleopDriveBasic(controller, drivetrain));
         //drivetrain.setDefaultCommand(new TeleopDriveAngle(controller, drivetrain));
+
         // push-to-change driving "speed"
         controller.rightBumper
             .whenPressed(()->controller.setDriveSpeed(OCXboxController.kSpeedMax))
@@ -144,7 +161,8 @@ public class RobotContainer {
             };
             drivetrain.setModuleStates(states, false, true);
         }, drivetrain);
-
+    }
+    private void configureOperatorBinds(OCXboxController controller) {
         //Climber manual up 
         controller.povUpButton
             .whenPressed(()->climber.setVolts(10), climber)
@@ -173,28 +191,16 @@ public class RobotContainer {
                 indexer.stop();
             }, intake, indexer);
         
-        // intake and automatically index cargo, rumble based on status
+        // intake and automatically index cargo
         controller.rightTriggerButton
             .whenPressed(
                 superstructure.intakeIndexCargo()
-                .deadlineWith(
-                    new RunCommand(()->{
-                        if(indexer.getTopSensed()){
-                            // pulsing rumble when full
-                            double rumble = Math.sin(Timer.getFPGATimestamp()*20);
-                            rumble = rumble < 0 ? 0 : 0.5;
-                            controller.rumble(rumble);
-                        }
-                        else if(indexer.shouldIndex()) controller.rumble(0.25);
-                        else controller.rumble(0);
-                    })
-                )
+                //.deadlineWith(superstructure.rumbleCargoFull(driver, operator))
             )
             .whenReleased(
                 superstructure.stopIntake()
                 .alongWith(
-                    superstructure.stopIndexer(),
-                    new InstantCommand(()->controller.rumble(0))
+                    superstructure.stopIndexer()
                 )
             );
         
@@ -300,168 +306,8 @@ public class RobotContainer {
                 superstructure.stopShooter()
             )
         );
-
-        // estimate hood angle continuously before shooting
-        shooter.setDefaultCommand(superstructure.autoHood());
     }
-    private void configureOperatorBinds(OCXboxController controller){
-    //Climber manual up 
-        controller.povUpButton
-        .whenPressed(()->climber.setVolts(10), climber)
-        .whenReleased(()->climber.setVolts(0), climber);
 
-    //Climber manual down
-    controller.povDownButton
-        .whenPressed(()->climber.setVolts(-10), climber)
-        .whenReleased(()->climber.setVolts(0), climber);
-
-    //Climber auto down 
-    controller.povRightButton
-        .whenPressed(()-> climber.setRotations(ClimberConstants.kBottomHeightRotations), climber);
-
-    controller.povLeftButton
-        .whenPressed(()-> climber.setRotations(ClimberConstants.kBottomHeightRotations), climber);
-
-        //Clear intake and indexer
-        controller.leftStick
-            .whenPressed(()->{
-                intake.setVoltageOut();
-                indexer.setVoltageOut();
-            }, intake, indexer)
-            .whenReleased(()->{
-                intake.stop();
-                indexer.stop();
-            }, intake, indexer);
-        
-        // intake and automatically index cargo, rumble based on status
-        controller.rightTriggerButton
-            .whenPressed(
-                superstructure.intakeIndexCargo()
-                .deadlineWith(
-                    new RunCommand(()->{
-                        if(indexer.getTopSensed()){
-                            // pulsing rumble when full
-                            double rumble = Math.sin(Timer.getFPGATimestamp()*20);
-                            rumble = rumble < 0 ? 0 : 0.5;
-                            controller.rumble(rumble);
-                        }
-                        else if(indexer.shouldIndex()) controller.rumble(0.25);
-                        else controller.rumble(0);
-                    })
-                )
-            )
-            .whenReleased(
-                superstructure.stopIntake()
-                .alongWith(
-                    superstructure.stopIndexer(),
-                    new InstantCommand(()->controller.rumble(0))
-                )
-            );
-        
-        controller.bButton.whenPressed(()->intake.setExtended(false));
-
-        controller.yButton.whenPressed(superstructure.fenderShootHigh())
-        .whenReleased(()->{
-            shooter.stop();
-            indexer.stop();
-        }, shooter, indexer);
-
-        controller.aButton.whenPressed(superstructure.fenderShootLow())
-        .whenReleased(()->{
-            shooter.stop();
-            indexer.stop();
-        }, shooter, indexer);
-
-        // auto shoot high hub with pose estimation
-        controller.leftTriggerButton.whenPressed(
-            superstructure.autoShoot(
-                ()->driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
-                ()->driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
-                false
-            ).beforeStarting(()->controller.resetLimiters())
-        )
-        .whenReleased(
-            superstructure.stopDrive()
-            .alongWith(
-                superstructure.stopIndexer(),
-                superstructure.stopShooter()
-            )
-        );
-
-        // auto shoot high hub with only vision data
-        /*
-        controller.leftBumper.whenPressed(
-            superstructure.autoShoot(
-                ()->driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
-                ()->driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
-                true,
-                //drivetrain.getPose().transformBy(vision.getRobotToTarget(drivetrain.getHeading())).getTranslation(),
-                drivetrain.getPose().plus(
-                    new Transform2d(vision.getRobotToTargetTranslation(), new Rotation2d())
-                ).getTranslation(),
-                ()->vision.getHasTarget()
-            ).beforeStarting(()->controller.resetLimiters())
-        )
-        .whenReleased(
-            superstructure.stopDrive()
-            .alongWith(
-                superstructure.stopIndexer(),
-                superstructure.stopShooter()
-            )
-        );
-        */
-
-        controller.leftBumper.whenPressed(
-            new InstantCommand(controller::resetLimiters)
-            .andThen(new FunctionalCommand(
-                ()->{
-                    drivetrain.resetPathController();
-                    vision.resetFilter();
-                }, 
-                ()->{
-                    Translation2d target = vision.getFilteredRobotToTargetTranslation().plus(
-                        drivetrain.getPose().minus(drivetrain.getPose(vision.getLatencySeconds())).getTranslation()
-                    );
-                    boolean hasTarget = vision.getHasTarget();
-                    double dist = target.getNorm();
-                    Rotation2d targetAngle = new Rotation2d(target.getX(), target.getY())
-                        .plus(new Rotation2d(Math.PI))
-                        .plus(drivetrain.getHeading());
-                    Shooter.State targetShooterState = ShotMap.find(dist);
-                    shooter.setState(targetShooterState);
-                    //Drivetrain heading target to hub
-                    boolean driveAtGoal = drivetrain.drive(
-                        driver.getForward() * drivetrain.getMaxLinearVelocityMeters(),
-                        driver.getStrafe() * drivetrain.getMaxLinearVelocityMeters(),
-                        targetAngle,
-                        true
-                    );
-                    //Indexer feed when shooter && drivetrain ready
-                    if(driveAtGoal && shooter.withinTolerance() && hasTarget){
-                        indexer.setVoltageFeed();
-                    }
-                    else{
-                        indexer.stop();
-                    }
-                }, 
-                (interrupted)->{
-                    shooter.stop();
-                    indexer.stop();
-                    drivetrain.stop();
-                },
-                ()->false,
-                drivetrain, shooter, indexer
-            ))
-        )
-        .whenReleased(
-            superstructure.stopDrive()
-            .alongWith(
-                superstructure.stopIndexer(),
-                superstructure.stopShooter()
-            )
-        );
-        
-    }
     // Manual shot tuning
     private void configureTestBinds(OCXboxController controller){
         drivetrain.setDefaultCommand(new TeleopDriveAngle(controller, drivetrain));
@@ -502,25 +348,9 @@ public class RobotContainer {
         controller.rightTriggerButton
             .whenPressed(
                 superstructure.intakeIndexCargo()
-                .deadlineWith(
-                    new RunCommand(()->{
-                        if(indexer.getTopSensed()){
-                            // pulsing rumble when full
-                            double rumble = Math.sin(Timer.getFPGATimestamp()*20);
-                            rumble = rumble < 0 ? 0 : 0.5;
-                            controller.rumble(rumble);
-                        }
-                        else if(indexer.shouldIndex()) controller.rumble(0.25);
-                        else controller.rumble(0);
-                    })
-                )
             )
             .whenReleased(
                 superstructure.stopIntake()
-                .alongWith(
-                    superstructure.stopIndexer(),
-                    new InstantCommand(()->controller.rumble(0))
-                )
             );
 
         controller.leftTriggerButton

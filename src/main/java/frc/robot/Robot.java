@@ -41,7 +41,6 @@ public class Robot extends TimedRobot {
     @Override
     public void autonomousInit() {
         container.setAllBrake(true);
-        container.init(false);
 
         autoCommand = container.getAutoCommand();
 
