@@ -14,13 +14,13 @@ public class IntakeConstants {
     public static final boolean kMotorInverted = true;
 
     public static final double kVoltageIn = 4;
-    public static final double kVoltageOut = -4;
+    public static final double kVoltageOut = -3;
 
     // Feedforward (simulation rn)
     public static final SimpleMotorFeedforward kFF = new SimpleMotorFeedforward(
         0.2, // Voltage to break static friction
         0.02, // Volts per radian per second
-        0.01 // Volts per radian per second squared
+        0.003 // Volts per radian per second squared
     );
     
     // Current limits

@@ -7,17 +7,21 @@ package frc.robot.subsystems;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
+import frc.robot.common.OCXboxController;
 import frc.robot.subsystems.climber.Climber;
 import frc.robot.subsystems.drivetrain.SwerveDrive;
 import frc.robot.subsystems.indexer.Indexer;
@@ -36,6 +40,8 @@ public class Superstructure extends SubsystemBase {
     private final Intake intake;
     private final Shooter shooter;
     private final Vision vision;
+
+    private int cargoStored = 0;
 
     public Superstructure(Climber climber, SwerveDrive drivetrain, Indexer indexer, Intake intake, Shooter shooter, Vision vision) {
         this.climber = climber;
@@ -201,6 +207,91 @@ public class Superstructure extends SubsystemBase {
     }
 
     /**
+     * Counts cargo amount internally and optionally rumbles controllers.
+     * (Ends immediately, schedules rumble commands)
+     * @param amount Amount of cargo to count (e.g. +1 cargo intaked)
+     * @param controllers Controllers to optionally rumble on positive cargo counted
+     */
+    public Command countCargo(int amount, OCXboxController... controllers) {
+        return new InstantCommand(()->{
+            int amnt = amount;
+            boolean intaking = false;
+            for(OCXboxController controller : controllers) {
+                intaking = intaking || controller.rightTriggerButton.get();
+            }
+            if(controllers.length > 0 && !intaking) amnt = Math.min(amnt, 0);
+
+            // count
+            cargoStored = MathUtil.clamp(cargoStored + amnt, 0, 2);
+
+            // +1 cargo rumble
+            if(amnt > 0) {
+                new RunCommand(()->{
+                    for(OCXboxController controller : controllers) {
+                        controller.rumble(true, 1);
+                    }
+                }).withTimeout(0.4)
+                .andThen(()->{
+                    for(OCXboxController controller : controllers) {
+                        controller.rumble(true, 0);
+                    }
+                }).schedule();
+            }
+            // Empty cargo rumble
+            if(amnt < 0 && cargoStored == 0) {
+                new RunCommand(()->{
+                    for(OCXboxController controller : controllers) {
+                        controller.rumble(false, 1);
+                    }
+                }).withTimeout(0.2)
+                .andThen(()->{
+                    for(OCXboxController controller : controllers) {
+                        controller.rumble(false, 0);
+                    }
+                }).schedule();
+            }
+        });
+    }
+    /**
+     * Pulse-rumbles controllers while cargo is full (RunCommand)
+     * @param controllers Controllers to rumble on cargo full
+     */
+    public Command rumbleCargoFull(OCXboxController... controllers) {
+        return new FunctionalCommand(
+            ()->{},
+            ()->{
+                if(cargoStored == 2) {
+                    double time = Timer.getFPGATimestamp() / 0.1; // time / x seconds per pulse
+                    boolean pulse = ((int) time) % 2 == 0;
+                    for(OCXboxController controller : controllers) {
+                        if(pulse) controller.rumble(false, 1);
+                        else controller.rumble(false, 0);
+                    }
+                }
+                else {
+                    for(OCXboxController controller : controllers) {
+                        controller.rumble(false, 0);
+                    }
+                }
+            },
+            (interrupted)->{
+                for(OCXboxController controller : controllers) {
+                    controller.rumble(false, 0);
+                } 
+            },
+            ()->false
+        );
+    }
+    /**
+     * Ends when stored cargo is 0.
+     * @param controllers Controllers to rumble on cargo empty
+     */
+    public Command checkCargoEmpty(OCXboxController... controllers) {
+        return new InstantCommand().perpetually()
+        .withInterrupt(()->cargoStored <= 0);
+    }
+
+    /**
      * Set the target shooter state perpetually.
      * Stops the shooter when interrupted.
      */
@@ -340,5 +431,22 @@ public class Superstructure extends SubsystemBase {
     public Command autoShoot(double timeout){
         return autoShoot(()->0, ()->0, false)
             .withTimeout(timeout);
+    }
+
+    /**
+     * Automatically adjust the hood angle based on current odom distance to hub.
+     * (This is the shooter default command)
+     */
+    public Command autoHood() {
+        return new RunCommand(()->{
+            shooter.setHood(
+                ShotMap.find(
+                    drivetrain.getPose().getTranslation().getDistance(FieldUtil.kFieldCenter)
+                    
+                ).hoodMM
+                
+                //0
+            );
+        }, shooter);
     }
 }

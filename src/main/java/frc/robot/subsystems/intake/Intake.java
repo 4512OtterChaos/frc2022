@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Robot;
 import frc.robot.util.TalonUtil;
 
 public class Intake extends SubsystemBase {
@@ -30,17 +31,22 @@ public class Intake extends SubsystemBase {
     private final DoubleSolenoid pistons = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, kPistonExtendPort, kPistonRetractPort);
 
     public Intake() {
-        setUpIntake(true);
+        setupIntake(true);
     }
-    private void setUpIntake(boolean init){
-        
-            if(init){
+    private void setupIntake(boolean init){
+        if(init){
             motor.configAllSettings(kIntakeConfiguration);
         }
         motor.setNeutralMode(NeutralMode.Brake);
         motor.enableVoltageCompensation(true);
         motor.setInverted(kMotorInverted);
-        TalonUtil.configStatusSlow(motor);
+        TalonUtil.configStatusCurrent(motor);
+        if(Robot.isReal()) {
+            TalonUtil.configStatusFollower(motor);
+        }
+        else {
+            TalonUtil.configStatusSim(motor);
+        }
     }
     
     @Override
@@ -83,12 +89,16 @@ public class Intake extends SubsystemBase {
         LinearSystemId.identifyVelocitySystem(kFF.kv, kFF.ka),
         DCMotor.getFalcon500(1),
         1,
-        VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(5))
+        VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(2))
     );
 
     @Override
     public void simulationPeriodic(){
-        flywheelSim.setInputVoltage(flywheelMotorSim.getMotorOutputLeadVoltage());
+        // apply our commanded voltage to our simulated physics mechanisms
+        double intakeVoltage = flywheelMotorSim.getMotorOutputLeadVoltage();
+        if(intakeVoltage >= 0) intakeVoltage = Math.max(0, intakeVoltage-kFF.ks);
+        else intakeVoltage = Math.min(0, intakeVoltage+kFF.ks);
+        flywheelSim.setInputVoltage(intakeVoltage);
         flywheelSim.update(0.02);
 
         double flywheelMotorVelocityNative = TalonUtil.radiansToVelocity(

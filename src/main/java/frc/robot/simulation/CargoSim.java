@@ -93,7 +93,7 @@ public class CargoSim {
             );
             Translation3d shooterPos = new Translation3d(0, 0, kShooterHeight).plusXY(robotPose.getTranslation());
 
-            double intakeVelocity = intakeRPM / 60 * Units.inchesToMeters(4) * Math.PI * 0.5;
+            double intakeVelocity = intakeRPM / 60 * Units.inchesToMeters(4) * Math.PI * 0.3;
             double indexVelocity = indexerRPM / 60 * Units.inchesToMeters(4) * Math.PI * 0.05;
 
             Rotation2d robotYaw = robotPose.getRotation();
@@ -265,7 +265,7 @@ public class CargoSim {
 
                     // cargo velocities based on intake state
                     flightVelocities = calcShotVelocities(
-                        -intakeVelocity,
+                        intakeVelocity,
                         new Rotation2d(),
                         shotYaw,
                         robotSpeeds

@@ -39,15 +39,15 @@ public class OCXboxController extends XboxController {
 
     private static final double kDeadband = 0.12;
 
-    public static final double kSpeedDefault = .5; //Traingins peed - 0.3 OG speed - 0.55
+    public static final double kSpeedDefault = .55; //Traingins peed - 0.3 OG speed - 0.55
     public static final double kSpeedFast = 0.65;
     public static final double kSpeedMax = 0.8;
     
     private double drivespeed = kSpeedDefault;
-    private static final double kTurnDrivespeed = 0.4; //Og speed 0.6 
+    private static final double kTurnDrivespeed = 0.5; //Og speed 0.6 
 
-    private SlewRateLimiter forwardLimiter = new SlewRateLimiter(1.0 / 0.5); // 1 / x seconds to full 0.5 
-    private SlewRateLimiter strafeLimiter = new SlewRateLimiter(1.0 / 0.5); // 0.5
+    private SlewRateLimiter forwardLimiter = new SlewRateLimiter(1.0 / 0.6); // 1 / x seconds to full 0.5 
+    private SlewRateLimiter strafeLimiter = new SlewRateLimiter(1.0 / 0.6); // 0.5
     private SlewRateLimiter turnLimiter = new SlewRateLimiter(1 / 0.33); //0.33
 
     /**

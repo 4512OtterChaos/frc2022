@@ -52,7 +52,8 @@ public class Shooter extends SubsystemBase {
         rightMotor.setInverted(kRightMotorInversion);
         leftMotor.follow(rightMotor);
         leftMotor.setInverted(kLeftMotorInversion);
-        TalonUtil.configStatusNormal(leftMotor, rightMotor);
+        TalonUtil.configStatusFollower(leftMotor);
+        TalonUtil.configStatusCurrent(rightMotor);
     }
     
     @Override

@@ -88,10 +88,11 @@ public class AutoOptions {
                     AutoConstants.kSlowSpeedConfig,
                     true
                 ) 
-            .deadlineWith(superstructure.intakeIndexCargo())
+                .deadlineWith(
+                    superstructure.intakeIndexCargo(),
+                    superstructure.autoHood()
+                )
             )
-            
-            
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(superstructure.autoShoot(3))
             .andThen(superstructure.stop())
@@ -111,7 +112,10 @@ public class AutoOptions {
                     AutoConstants.kSlowSpeedConfig,
                     true
                 ) 
-                .deadlineWith(superstructure.intakeIndexCargo())
+                .deadlineWith(
+                    superstructure.intakeIndexCargo(),
+                    superstructure.autoHood()
+                )
             )
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(superstructure.autoShoot(4))
@@ -119,7 +123,7 @@ public class AutoOptions {
                 autoFollowTrajectory(
                     drivetrain, 
                     "DoubleLeftTroll2", 
-                    AutoConstants.kMediumSpeedConfig, 
+                    AutoConstants.kSlowSpeedConfig, 
                     false
                 )
                 .deadlineWith(superstructure.intakeIndexCargo())
@@ -135,24 +139,17 @@ public class AutoOptions {
         );
 
         autoOptions.addOption("FenderDoubleLeft",
-            superstructure.fenderShootHigh(2.5)
-            .andThen(()->{
-                shooter.stop();
-                indexer.stop();
-            }, indexer, shooter)
-            .andThen(
-                autoFollowTrajectory(
-                    drivetrain, 
-                    "DoubleLeft1", 
-                    AutoConstants.kMediumSpeedConfig,
-                    true
-                ) 
-                .deadlineWith(superstructure.intakeIndexCargo())
-            )
+            autoFollowTrajectory(
+                drivetrain, 
+                "DoubleLeft1", 
+                AutoConstants.kSlowSpeedConfig,
+                true
+            ) 
+            .deadlineWith(superstructure.intakeIndexCargo())
             .andThen(autoFollowTrajectory(
                 drivetrain, 
                 "FenderDoubleLeft2", 
-                AutoConstants.kMediumSpeedConfig,
+                AutoConstants.kSlowSpeedConfig,
                 false
                 )
                 .andThen(()->drivetrain.stop(), drivetrain)
@@ -312,7 +309,10 @@ public class AutoOptions {
                     AutoConstants.kMediumSpeedConfig,
                     false
                 ) 
-                .deadlineWith(superstructure.intakeIndexCargo(drivetrain::getLinearVelocity))
+                .deadlineWith(
+                    superstructure.intakeIndexCargo(drivetrain::getLinearVelocity),
+                    superstructure.autoHood()
+                )
             )
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(
@@ -325,7 +325,9 @@ public class AutoOptions {
                     AutoConstants.kMediumSpeedConfig,
                     false
                 )
-                .deadlineWith(superstructure.intakeIndexCargo(drivetrain::getLinearVelocity))
+                .deadlineWith(
+                    superstructure.intakeIndexCargo(drivetrain::getLinearVelocity)
+                )
             )
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(
@@ -338,7 +340,10 @@ public class AutoOptions {
                     "QuintetRight3", 
                     AutoConstants.kFastSpeedConfig,
                     false
-                ) 
+                )
+                .deadlineWith(
+                    superstructure.autoHood()
+                )
             )
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(

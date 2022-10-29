@@ -28,14 +28,14 @@ public class Vision extends SubsystemBase {
     @Override
     public void periodic() {
         // 0 side by side, 1 main, 2 driver cam
-        limelight.setStreamMode(1);
+        limelight.setStreamMode(2);
         if(DriverStation.isDisabled()){
             // 0 default, 1 off, 2 blink, 3 on
-            limelight.setLedMode(1);
+            limelight.setLedMode(3);
         }
         else{
             // 0 default, 1 off, 2 blink, 3 on
-            limelight.setLedMode(3);
+            limelight.setLedMode(0);
         }
     }
 
