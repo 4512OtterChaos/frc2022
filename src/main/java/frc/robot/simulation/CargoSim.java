@@ -18,6 +18,9 @@ import edu.wpi.first.util.function.BooleanConsumer;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.subsystems.drivetrain.SwerveDrive;
+import frc.robot.subsystems.indexer.Indexer;
+import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.util.FieldUtil;
@@ -38,6 +41,8 @@ public class CargoSim {
             FLIGHT
         }
         private State state = State.IDLE;
+        private boolean wasShot = false;
+        private boolean wasOuttaked = false;
 
         public final Translation3d resetPos;
         private Translation3d pos;
@@ -64,8 +69,15 @@ public class CargoSim {
 
         public void setPos(Translation3d pos){this.pos = pos;}
         public void setState(State state){this.state = state;}
+        public boolean consumeShotStatus() {
+            boolean result = wasShot;
+            wasShot = false;
+            return result;
+        }
         
         public void reset(){
+            wasShot = false;
+            wasOuttaked = false;
             pos = resetPos;
             state = State.IDLE;
             currentPathDistance = 0;
@@ -93,8 +105,9 @@ public class CargoSim {
             );
             Translation3d shooterPos = new Translation3d(0, 0, kShooterHeight).plusXY(robotPose.getTranslation());
 
-            double intakeVelocity = intakeRPM / 60 * Units.inchesToMeters(4) * Math.PI * 0.3;
-            double indexVelocity = indexerRPM / 60 * Units.inchesToMeters(4) * Math.PI * 0.05;
+            double intakeVelocity = intakeRPM / 60 * Units.inchesToMeters(4) * Math.PI * 0.15;
+            double indexVelocity = indexerRPM / 60 * Units.inchesToMeters(4) * Math.PI * 0.25;
+            //if(indexVelocity <= 0) indexVelocity *= 0.25;
 
             Rotation2d robotYaw = robotPose.getRotation();
 
@@ -242,6 +255,7 @@ public class CargoSim {
                 if(currentPathDistance >= kPathDistance && shotVelocity > 0.1){
                     setState(State.FLIGHT);
                     setPos(shooterPos);
+                    wasShot = true;
                     spinDirection = robotYaw;
                     spinVel = shotSpinVelocity;
                     tripsBot = false;
@@ -255,9 +269,11 @@ public class CargoSim {
                         robotSpeeds
                     );
                 }
-                else if(currentPathDistance < 0 && intakeVelocity < -0.1){
+                else if(currentPathDistance <= 0 && intakeVelocity < -0.1){
                     setState(State.FLIGHT);
                     setPos(intakePos);
+                    wasShot = true;
+                    wasOuttaked = true;
                     spinDirection = robotYaw;
                     spinVel = -intakeVelocity;
                     tripsBot = false;
@@ -301,33 +317,23 @@ public class CargoSim {
 
     private final Field2d xyField;
     private final Field2d xzField;
-    
-    private final Supplier<Pose2d> getRobotPose;
-    private final Supplier<ChassisSpeeds> getRobotSpeeds;
-    
-    private final DoubleSupplier getIntakeRPM;
-    private final DoubleSupplier getIndexerRPM;
-    private final Supplier<Shooter.State> getShooterState;
-
-    private final BooleanConsumer bottomSensorSim;
-    private final BooleanConsumer topSensorSim;
+    private final SwerveDrive drivetrain;
+    private final Intake intake;
+    private final Indexer indexer;
+    private final Shooter shooter;
 
     public CargoSim(
-            Supplier<Pose2d> robotPose, Supplier<ChassisSpeeds> robotSpeeds,
-            DoubleSupplier intakeRPM, DoubleSupplier indexerRPM,
-            Supplier<Shooter.State> shooterState,
-            BooleanConsumer bottomSensorSim,
-            BooleanConsumer topSensorSim,
+            SwerveDrive drivetrain,
+            Intake intake,
+            Indexer indexer,
+            Shooter shooter,
             Field2d xyField,
             Field2d xzField
     ){
-        getRobotPose = robotPose;
-        getRobotSpeeds = robotSpeeds;
-        getIntakeRPM = intakeRPM;
-        getIndexerRPM = indexerRPM;
-        this.getShooterState = shooterState;
-        this.bottomSensorSim = bottomSensorSim;
-        this.topSensorSim = topSensorSim;
+        this.drivetrain = drivetrain;
+        this.intake = intake;
+        this.indexer = indexer;
+        this.shooter = shooter;
         this.xyField = xyField;
         this.xzField = xzField;
 
@@ -381,24 +387,34 @@ public class CargoSim {
         double dt = now - lastTime;
         lastTime = now;
 
-        Pose2d robotPose = getRobotPose.get();
-        ChassisSpeeds robotSpeeds = getRobotSpeeds.get();
-        double intakeRPM = getIntakeRPM.getAsDouble();
-        double indexerRPM = getIndexerRPM.getAsDouble();
-        Shooter.State shooterState = getShooterState.get();
+        Pose2d robotPose = drivetrain.getPose();
+        ChassisSpeeds robotSpeeds = drivetrain.getChassisSpeeds();
+        double intakeRPM = intake.getRPM();
+        double indexerRPM = indexer.getSimRPM();
+        Shooter.State shooterState = shooter.getState();
 
         boolean bottomSensed = false;
         boolean topSensed = false;
+        boolean shotCargo = false;
+        boolean outtakedCargo = false;
         for(SimCargo cargo : cargoList){
             cargo.update(dt, robotPose, robotSpeeds, intakeRPM, indexerRPM, shooterState);
             // update indexer sensors
             
             bottomSensed = cargo.getTripsBottom() || bottomSensed;
             topSensed = cargo.getTripsTop() || topSensed;
+            if(!shotCargo && cargo.consumeShotStatus()) {
+                shotCargo = true;
+                outtakedCargo = cargo.wasOuttaked;
+            }
         }
 
-        bottomSensorSim.accept(bottomSensed);
-        topSensorSim.accept(topSensed);
+        indexer.setBottomSimSensed(bottomSensed);
+        indexer.setTopSimSensed(topSensed);
+        if(shotCargo) {
+            if(!outtakedCargo) shooter.setSimRPM(shooter.getState().rpm * (2750.0/3000.0));
+            else intake.setSimRPM(intake.getRPM() * (2800.0/3000.0));
+        }
 
         xyField.getObject("Cargo").setPoses(
             cargoList.stream()

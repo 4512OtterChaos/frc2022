@@ -12,7 +12,9 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
@@ -31,8 +33,11 @@ import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShotMap;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.FieldUtil;
+import io.github.oblarg.oblog.Loggable;
+import io.github.oblarg.oblog.annotations.*;
 
-public class Superstructure extends SubsystemBase {
+@Log.Exclude
+public class Superstructure extends SubsystemBase implements Loggable {
 
     private final Climber climber;
     private final SwerveDrive drivetrain;
@@ -41,6 +46,7 @@ public class Superstructure extends SubsystemBase {
     private final Shooter shooter;
     private final Vision vision;
 
+    @Log
     private int cargoStored = 0;
 
     public Superstructure(Climber climber, SwerveDrive drivetrain, Indexer indexer, Intake intake, Shooter shooter, Vision vision) {
@@ -120,9 +126,13 @@ public class Superstructure extends SubsystemBase {
             new WaitCommand(0.3), 
             intake::getExtended
         ))
-        .andThen(new StartEndCommand(
-            ()->intake.setVoltage(IntakeConstants.kVoltageIn+Math.abs(linearVelocity.getAsDouble()*2)), 
-            ()->intake.stop(),
+        .andThen(new FunctionalCommand(
+            ()->{},
+            ()->{
+                intake.setVoltage(IntakeConstants.kVoltageIn+Math.abs(linearVelocity.getAsDouble()));
+            }, 
+            (interrupted)->intake.stop(),
+            ()->false,
             intake
         ));
     }
@@ -219,7 +229,9 @@ public class Superstructure extends SubsystemBase {
             for(OCXboxController controller : controllers) {
                 intaking = intaking || controller.rightTriggerButton.get();
             }
-            if(controllers.length > 0 && !intaking) amnt = Math.min(amnt, 0);
+            if(controllers.length > 0 && !intaking && !DriverStation.isAutonomous()) {
+                amnt = Math.min(amnt, 0);
+            }
 
             // count
             cargoStored = MathUtil.clamp(cargoStored + amnt, 0, 2);

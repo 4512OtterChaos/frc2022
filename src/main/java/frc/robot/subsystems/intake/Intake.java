@@ -11,12 +11,14 @@ import com.ctre.phoenix.motorcontrol.TalonFXSimCollection;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -29,6 +31,19 @@ public class Intake extends SubsystemBase {
     private final WPI_TalonFX motor = new WPI_TalonFX(kMotorID);
     
     private final DoubleSolenoid pistons = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, kPistonExtendPort, kPistonRetractPort);
+
+    // dummy sim mechanism for comparing simulated response to actual
+    private final FlywheelSim dummySim = new FlywheelSim(
+        LinearSystemId.identifyVelocitySystem(kFF.kv, kFF.ka),
+        DCMotor.getFalcon500(1),
+        1
+    );
+
+    private final double kHighPassOuttake = 40; // minimum amount to register one cargo "outtaken"
+    private LinearFilter rpmErrorHighPass = LinearFilter.highPass(0.15, 0.02);
+    private double highPassedRPMError = 0;
+    private final double kSpinupTime = 0.15; // ignore rpm change while spinning up
+    private double lastSpinup = Timer.getFPGATimestamp();
 
     public Intake() {
         setupIntake(true);
@@ -51,6 +66,12 @@ public class Intake extends SubsystemBase {
     
     @Override
     public void periodic() {
+        dummySim.update(0.02);
+
+        // compare our expected rpm to actual to see unmodeled disturbances
+        highPassedRPMError = rpmErrorHighPass.calculate(
+            dummySim.getAngularVelocityRPM() - getRPM()
+        );
     }
     public void stop(){
         setVoltage(0);
@@ -59,6 +80,14 @@ public class Intake extends SubsystemBase {
         motor.setNeutralMode(is ? NeutralMode.Brake : NeutralMode.Coast);
     }
     public void setVoltage(double voltage){
+        // simulate "expected" response
+        double estVoltage = voltage;
+        if(estVoltage >= 0) estVoltage = Math.max(0, estVoltage-kFF.ks);
+        else estVoltage = Math.min(0, estVoltage+kFF.ks);
+        dummySim.setInputVoltage(estVoltage);
+        if(Math.abs(motor.getMotorOutputVoltage()) < kFF.ks && Math.abs(voltage) > kFF.ks)
+            lastSpinup = Timer.getFPGATimestamp();
+
         motor.set(voltage / kVoltageSaturation);
     }
     public void setVoltageIn(){setVoltage(kVoltageIn);}
@@ -78,8 +107,16 @@ public class Intake extends SubsystemBase {
         return TalonUtil.velocityToRotations(motor.getSelectedSensorVelocity(), 1) * 60;
     }
 
+    public boolean getOuttaked() {
+        return
+            highPassedRPMError <= -kHighPassOuttake &&
+            Timer.getFPGATimestamp() - lastSpinup >= kSpinupTime &&
+            motor.getMotorOutputPercent() < -kFF.ks/12;
+    }
+
     public void log(){
         SmartDashboard.putNumber("Intake/RPM", getRPM());
+        SmartDashboard.putNumber("Intake/HighPass", highPassedRPMError);
     }
 
 
@@ -109,6 +146,11 @@ public class Intake extends SubsystemBase {
         flywheelMotorSim.setSupplyCurrent(flywheelSim.getCurrentDrawAmps()/2);
 
         flywheelMotorSim.setBusVoltage(RobotController.getBatteryVoltage());
+    }
+
+    public void setSimRPM(double rpm) {
+        if(motor.getInverted()) rpm = -rpm;
+        flywheelSim.setState(VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(rpm)));
     }
 
     public double getCurrentDraw(){

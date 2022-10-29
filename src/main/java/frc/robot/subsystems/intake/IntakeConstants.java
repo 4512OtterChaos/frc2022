@@ -20,7 +20,7 @@ public class IntakeConstants {
     public static final SimpleMotorFeedforward kFF = new SimpleMotorFeedforward(
         0.2, // Voltage to break static friction
         0.02, // Volts per radian per second
-        0.003 // Volts per radian per second squared
+        0.001 // Volts per radian per second squared
     );
     
     // Current limits

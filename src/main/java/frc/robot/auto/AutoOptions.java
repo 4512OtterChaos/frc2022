@@ -78,8 +78,7 @@ public class AutoOptions {
             new InstantCommand(
                 ()->intake.setExtended(true), 
                 intake
-                
-                )
+            )
             .andThen(new WaitCommand(2))
             .andThen(
                 autoFollowTrajectory(
@@ -102,8 +101,7 @@ public class AutoOptions {
             new InstantCommand(
                 ()->intake.setExtended(true), 
                 intake
-                
-                )
+            )
             .andThen(new WaitCommand(2))    
             .andThen(
                 autoFollowTrajectory(
@@ -287,11 +285,12 @@ public class AutoOptions {
         */
         autoOptions.addOption("QuintupleRight",
             
-            superstructure.autoShoot(2)
+            superstructure.autoShoot(2).raceWith(superstructure.checkCargoEmpty())
             .beforeStarting(()->{
                 drivetrain.resetOdometry(new Pose2d(
                     tripleRightTrajectory.getInitialPose().getTranslation(), 
                     tripleRightTrajectory.getInitialState().holonomicRotation));
+                superstructure.countCargo(1);
             })
             .alongWith(
                 new InstantCommand(()-> intake.setExtended(true), 
@@ -316,7 +315,7 @@ public class AutoOptions {
             )
             .andThen(()->drivetrain.stop(), drivetrain)
             .andThen(
-                superstructure.autoShoot(2.5)
+                superstructure.autoShoot(2.5).raceWith(superstructure.checkCargoEmpty())
             )
             .andThen(
                 autoFollowTrajectory(
@@ -355,20 +354,20 @@ public class AutoOptions {
 
         //Don't use, no odometry; only as last resort 
         autoOptions.addOption("TaxiLastResort",
-            new WaitCommand(2)
+            new WaitCommand(2.5)
             .deadlineWith(new RunCommand(()->drivetrain.drive(0.6, 0, 0, false), drivetrain))
             .andThen(()->drivetrain.stop(), drivetrain)
         );
 
         autoOptions.addOption("ShootThenTaxiLastResort",
-            superstructure.autoShoot(2)
+            superstructure.fenderShootHigh(4)
             .andThen(()->{
                 shooter.stop();
                 indexer.stop();
             }, indexer, shooter)
             .andThen(
-                new WaitCommand(2)
-                .deadlineWith(new RunCommand(()->drivetrain.drive(2, 0, 0, false), drivetrain))
+                new WaitCommand(2.5)
+                .deadlineWith(new RunCommand(()->drivetrain.drive(0.6, 0, 0, false), drivetrain))
             )
             .andThen(()->drivetrain.stop(), drivetrain)
         );

@@ -141,11 +141,16 @@ public class Indexer extends SubsystemBase {
     }
     @Override
     public void simulationPeriodic(){
-        flywheelSim.setInputVoltage(motor.getAppliedOutput()*motor.getVoltageCompensationNominalVoltage());
+        // apply our commanded voltage to our simulated physics mechanisms
+        double indexVoltage = motor.getAppliedOutput();
+        if(indexVoltage >= 0) indexVoltage = Math.max(0, indexVoltage-kFF.ks);
+        else indexVoltage = Math.min(0, indexVoltage+kFF.ks);
+        flywheelSim.setInputVoltage(indexVoltage);
         flywheelSim.update(0.02);
 
         double positionDelta = flywheelSim.getAngularVelocityRPM() / 60 * 0.02;
     }
+    public double getSimRPM() {return flywheelSim.getAngularVelocityRPM();}
     public void setBottomSimSensed(boolean is){bottomSensorSim.setValue(!is);}
     public void setTopSimSensed(boolean is){topSensorSim.setValue(!is);}
 

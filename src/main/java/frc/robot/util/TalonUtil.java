@@ -9,6 +9,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
  */
 public class TalonUtil {
 
+    private static final int kCANTimeout = 50;
     /**
      * Configures the status frame periods of given motors
      * @return Success
@@ -16,7 +17,7 @@ public class TalonUtil {
     public static boolean configStatusSolo(WPI_TalonFX... motors){
         boolean success = true;
         for(WPI_TalonFX motor : motors){
-            ErrorCode result = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, 20, 20);
+            ErrorCode result = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, 20, kCANTimeout);
             success = success && (result == ErrorCode.OK);
         }
         return success;
@@ -28,8 +29,8 @@ public class TalonUtil {
     public static boolean configStatusFollower(WPI_TalonFX... motors){
         boolean success = true;
         for(WPI_TalonFX motor : motors){
-            ErrorCode result1 = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, 255, 20);
-            ErrorCode result2 = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0, 255, 20);
+            ErrorCode result1 = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, 255, kCANTimeout);
+            ErrorCode result2 = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0, 255, kCANTimeout);
             success = success && (result1 == ErrorCode.OK) && (result2 == ErrorCode.OK);
         }
         return success;
@@ -41,7 +42,7 @@ public class TalonUtil {
     public static boolean configStatusCurrent(WPI_TalonFX... motors){
         boolean success = true;
         for(WPI_TalonFX motor : motors){
-            ErrorCode result = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_Brushless_Current, 20, 20);
+            ErrorCode result = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_Brushless_Current, 20, kCANTimeout);
             success = success && (result == ErrorCode.OK);
         }
         return success;
@@ -53,8 +54,8 @@ public class TalonUtil {
     public static boolean configStatusSim(WPI_TalonFX... motors){
         boolean success = true;
         for(WPI_TalonFX motor : motors){
-            ErrorCode result1 = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0, 10, 20);
-            ErrorCode result2 = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_10_Targets, 10, 20);
+            ErrorCode result1 = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0, 10, kCANTimeout);
+            ErrorCode result2 = motor.setStatusFramePeriod(StatusFrameEnhanced.Status_10_Targets, 10, kCANTimeout);
             success = success && (result1 == ErrorCode.OK) && (result2 == ErrorCode.OK);
         }
         return success;

@@ -17,15 +17,14 @@ public class CargoSimPhysics {
     public static final double kIntakeYDist = 2*kRadius + Units.inchesToMeters(2);
 
     // indexer waypoints
-    public static final double kBotSensorBeginDistance = Units.inchesToMeters(6);
-    public static final double kIndexBeginDistance = Units.inchesToMeters(11); // 25% intake, 75% index
-    public static final double kBotSensorEndDistance = Units.inchesToMeters(17);
-    public static final double kTopSensorBeginDistance = Units.inchesToMeters(29);
+    public static final double kBotSensorBeginDistance = Units.inchesToMeters(11);
+    public static final double kIndexBeginDistance = Units.inchesToMeters(16); // 25% intake, 75% index
+    public static final double kBotSensorEndDistance = Units.inchesToMeters(22);
+    public static final double kTopSensorBeginDistance = Units.inchesToMeters(34);
+    // distance from intake entrance to shooter exit
+    public static final double kPathDistance = Units.inchesToMeters(37);
 
     public static final double kShooterHeight = Units.inchesToMeters(24);
-    
-    // distance from intake entrance to shooter exit
-    public static final double kPathDistance = Math.hypot(kIntakeOffset, kShooterHeight);
 
     public static final double kFloorBounceFactor = 0.75; // percent velocity retained
     public static final double kHubBounceFactor = 0.5; // percent velocity retained

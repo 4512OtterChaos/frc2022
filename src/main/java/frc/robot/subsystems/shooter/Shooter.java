@@ -14,11 +14,13 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.interpolation.Interpolatable;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -32,6 +34,12 @@ public class Shooter extends SubsystemBase {
     private final LinearServo rightServo = new LinearServo(kRightServoChannel, kServoLengthMM, kServoSpeedMM);
 
     private State targetState = new State();
+
+    private final double kHighPassShot = 80; // minimum high pass amount to register one cargo "outtaken"
+    private LinearFilter rpmErrorHighPass = LinearFilter.highPass(0.075, 0.02);
+    private double highPassedRPMError = 0;
+    private final double kSpinupTime = 0.3; // ignore rpm change while spinning up
+    private double lastSpinup = Timer.getFPGATimestamp();
 
     public Shooter() {
         setupFlywheel(true);
@@ -62,11 +70,13 @@ public class Shooter extends SubsystemBase {
         leftServo.updateCurPos();
         rightServo.updateCurPos();
 
+        // detect RPM changes
+        highPassedRPMError = rpmErrorHighPass.calculate(getTargetState().rpm - getState().rpm);
+
         // check if the motors had an oopsie, reapply settings
         if(rightMotor.hasResetOccurred() || leftMotor.hasResetOccurred()){
             setupFlywheel(false);
         }
-        
     }
 
     public void setRPM(double rpm){
@@ -91,6 +101,8 @@ public class Shooter extends SubsystemBase {
 
     }
     public void setState(State state){
+        if(targetState.rpm <= kToleranceRPM && state.rpm >= kToleranceRPM)
+            lastSpinup = Timer.getFPGATimestamp();
         targetState = state;
         setRPM(state.rpm);
         setHood(state.hoodMM);
@@ -109,6 +121,13 @@ public class Shooter extends SubsystemBase {
     public boolean withinTolerance(){
         return getState().withinTolerance(getTargetState());
     }
+    
+    public boolean getShotCargo() {
+        return
+            highPassedRPMError >= kHighPassShot &&
+            targetState.rpm > kToleranceRPM &&
+            Timer.getFPGATimestamp() - lastSpinup >= kSpinupTime;
+    }
 
     public void log(){
         State state = getState();
@@ -120,6 +139,8 @@ public class Shooter extends SubsystemBase {
         );
         SmartDashboard.putNumber("Shooter/RPM", state.rpm);
         SmartDashboard.putNumber("Shooter/HoodMM", state.hoodMM);
+
+        SmartDashboard.putNumber("Shooter/HighPass", highPassedRPMError);
     }
     
     /**
@@ -186,6 +207,10 @@ public class Shooter extends SubsystemBase {
 
         rightMotorSim.setBusVoltage(RobotController.getBatteryVoltage());
         leftMotorSim.setBusVoltage(RobotController.getBatteryVoltage());
+    }
+
+    public void setSimRPM(double rpm) {
+        flywheelSim.setState(VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(rpm)));
     }
 
     public double getCurrentDraw(){

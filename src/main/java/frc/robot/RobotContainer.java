@@ -49,6 +49,7 @@ public class RobotContainer {
     private final Intake intake = new Intake();
     private final Shooter shooter = new Shooter();
     private final Vision vision = new Vision();
+    @Log.Include
     private final Superstructure superstructure = new Superstructure(climber, drivetrain, indexer, intake, shooter, vision);
 
     private OCXboxController driver = new OCXboxController(0);
@@ -122,8 +123,12 @@ public class RobotContainer {
             .whenActive(superstructure.countCargo(1, driver, operator));
 
         // count shot cargo
+        new Trigger(()->shooter.getShotCargo())
+            .whenActive(superstructure.countCargo(-1, driver, operator));
 
         // count outtaken cargo
+        new Trigger(()->intake.getOuttaked())
+            .whenActive(superstructure.countCargo(-1, driver, operator));
     }
     private void configureDriverBinds(OCXboxController controller) {
         // when no other command is using the drivetrain, we
@@ -194,7 +199,7 @@ public class RobotContainer {
         // intake and automatically index cargo
         controller.rightTriggerButton
             .whenPressed(
-                superstructure.intakeIndexCargo()
+                superstructure.intakeIndexCargo(drivetrain::getLinearVelocity)
                 //.deadlineWith(superstructure.rumbleCargoFull(driver, operator))
             )
             .whenReleased(
@@ -399,13 +404,10 @@ public class RobotContainer {
 
     private final Field2d xzField = new Field2d();
     private CargoSim cargoSimulation = new CargoSim(
-        drivetrain::getPose,
-        drivetrain::getChassisSpeeds,
-        intake::getRPM,
-        indexer::getRPM,
-        shooter::getState,
-        indexer::setBottomSimSensed,
-        indexer::setTopSimSensed,
+        drivetrain,
+        intake,
+        indexer,
+        shooter,
         field,
         xzField
     );

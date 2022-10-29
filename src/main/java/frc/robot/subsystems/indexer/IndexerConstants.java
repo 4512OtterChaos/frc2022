@@ -15,9 +15,9 @@ public class IndexerConstants {
 
     // Feedforward loaded with cargo (simulation rn)
     public static final SimpleMotorFeedforward kFF = new SimpleMotorFeedforward(
-        0.28, // Voltage to break static friction
-        0.02, // Volts per radian per second
-        0.005 // Volts per radian per second squared
+        0.75, // Voltage to break static friction
+        0.03, // Volts per radian per second
+        0.00075 // Volts per radian per second squared
     );
     
     // Current limits
